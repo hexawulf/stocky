@@ -1,0 +1,52 @@
+{
+  "name": "stocky",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Self-hosted homelab hardware inventory: what is in your machines, and what is in stock.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hexawulf/stocky.git"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "format": "prettier --write --experimental-cli src/",
+    "test": "vitest run",
+    "test:api": "scripts/test-api.sh"
+  },
+  "dependencies": {
+    "pocketbase": "^0.28.1",
+    "vue": "^3.6.0-rc.0",
+    "vue-router": "^5.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.8",
+    "@vue/test-utils": "^2.5.1",
+    "happy-dom": "^20.14.5",
+    "prettier": "3.9.6",
+    "vite": "^8.2.2",
+    "vite-plugin-vue-devtools": "^8.2.1",
+    "vitest": "^5.0.3"
+  },
+  "engines": {
+    "node": "^22.18.0 || >=24.12.0"
+  },
+  "overrides": {
+    "vue": "^3.6.0-rc.0",
+    "@vue/compiler-core": "^3.6.0-rc.0",
+    "@vue/compiler-dom": "^3.6.0-rc.0",
+    "@vue/compiler-sfc": "^3.6.0-rc.0",
+    "@vue/compiler-ssr": "^3.6.0-rc.0",
+    "@vue/compiler-vapor": "^3.6.0-rc.0",
+    "@vue/reactivity": "^3.6.0-rc.0",
+    "@vue/runtime-core": "^3.6.0-rc.0",
+    "@vue/runtime-dom": "^3.6.0-rc.0",
+    "@vue/runtime-vapor": "^3.6.0-rc.0",
+    "@vue/server-renderer": "^3.6.0-rc.0",
+    "@vue/shared": "^3.6.0-rc.0",
+    "@vue/compat": "^3.6.0-rc.0"
+  }
+}

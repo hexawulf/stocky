@@ -1,0 +1,20 @@
+{
+  "schema": "stocky.discovery/1",
+  "collector": "stocky-collect 1.0.0",
+  "collectedAt": "2026-10-05T09:00:00+08:00",
+  "host": {"hostname": "desktop-test", "machineIdHash": "sha256:4ba68aa8767bde72e8c798ee82d1275291cea73e72ad74d35ecf48e41386eb82", "platform": "x86_64", "virtual": false, "model": "LENOVO ThinkCentre M70q"},
+  "items": [
+    {"kind": "system", "vendor": "LENOVO", "model": "ThinkCentre M70q", "serial": "7XQ1234", "raw": {"version": "Not Specified"}},
+    {"kind": "board", "vendor": "LENOVO", "model": "0M5F7T", "serial": "/7XQ1234/CNWS20012345/", "raw": {"version": "A00"}},
+    {"kind": "cpu", "vendor": "Intel", "model": "Intel(R) Core(TM) i5-10500T CPU @ 2.30GHz", "raw": {"cores": "6", "architecture": "x86_64"}},
+    {"kind": "memory", "vendor": "Kingston", "model": "KF432S20IB/16", "serial": "1A2B3C4D", "sizeBytes": 17179869184, "memoryType": "DDR4", "speedMTs": 3200, "formFactor": "SODIMM", "slot": "DIMM A", "raw": {"bank": "BANK 0", "size": "16 GB"}},
+    {"kind": "memory", "vendor": "Samsung", "model": "M471A1K43DB1-CWE", "sizeBytes": 8589934592, "memoryType": "DDR4", "speedMTs": 2666, "formFactor": "SODIMM", "slot": "DIMM B", "raw": {"bank": "BANK 2", "size": "8192 MB"}},
+    {"kind": "drive", "model": "Samsung SSD 870 EVO 500GB", "serial": "S62ANJ0R123456A", "sizeBytes": 500107862016, "interface": "sata", "slot": "ata1", "removable": false, "raw": {"name": "sda", "wwn": "0x5002538f00000001", "rotational": "0"}},
+    {"kind": "drive", "vendor": "JMicron", "model": "USB3.0 SATA Bridge", "serial": "WD-WX12A3B4C5D6", "sizeBytes": 2000398934016, "interface": "usb", "slot": "usb2/2-1", "removable": false, "raw": {"name": "sdb", "rotational": "1"}},
+    {"kind": "drive", "model": "WDC WDS100T2B0C-00PXH0", "serial": "21123X801234", "sizeBytes": 1000204886016, "interface": "nvme", "slot": "nvme0", "removable": false, "raw": {"name": "nvme0n1", "wwn": "eui.e8238fa6bf530001", "rotational": "0"}},
+    {"kind": "nic", "model": "PCI network adapter 8086:0d4c", "serial": "a4:bb:6d:00:00:01", "bus": "pci", "onboard": true, "raw": {"interface": "eno1", "driver": "e1000e", "ids": "8086:0d4c", "address": "0000:00:1f.6"}},
+    {"kind": "nic", "vendor": "Realtek", "model": "USB 10/100/1000 LAN", "serial": "00:e0:4c:68:00:01", "bus": "usb", "onboard": false, "raw": {"interface": "enx00e04c680001", "driver": "r8152", "ids": "0bda:8153", "address": "2-2:1.0"}}
+  ],
+  "skipped": [],
+  "warnings": []
+}

@@ -1,0 +1,6 @@
+{
+  "schema": "stocky.discovery/1",
+  "collector": "stocky-collect 1.0.0",
+  "host": { "hostname": "truncated", "virtual": false },
+  "items": [
+    { "kind": "drive", "model": "cut off mid-upload

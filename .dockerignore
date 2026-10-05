@@ -1,0 +1,24 @@
+# The build context needs only: package*.json, index.html, vite.config.js,
+# jsconfig.json, public/, src/, pb_migrations/, pb_hooks/ (see Dockerfile).
+# Never send data, secrets or local tooling to the builder.
+
+node_modules
+dist
+.git
+.github
+.env*
+pb_data
+.learnings
+.vscode
+.claude
+CLAUDE*.md
+
+# not used by the image
+docs
+scripts
+spec.md
+README.md
+compose.yaml
+tools
+Dockerfile
+.dockerignore

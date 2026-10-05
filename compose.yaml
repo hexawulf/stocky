@@ -1,0 +1,21 @@
+# Stocky (docs/deploy.md)
+#
+# First start:
+#   mkdir -p pb_data            # writable by uid/gid 1000: the container runs as 1000:1000
+#   docker compose up -d
+#   docker exec -it stocky /pb/pocketbase superuser upsert <email> <password>
+#
+# All state is in ./pb_data (SQLite + settings): back it up, and take a backup
+# before a release that changes the schema (migrations apply on start).
+
+services:
+  stocky:
+    image: 0xwulf/stocky:latest # or pin vX.Y.Z to update deliberately
+    container_name: stocky
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5030:8080" # put a TLS reverse proxy in front (docs/deploy.md)
+    volumes:
+      - ./pb_data:/pb/pb_data
+    mem_limit: 128m
+    # Password-reset mail: set SMTP in the dashboard (Settings → Mail settings).

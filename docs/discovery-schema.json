@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/hexawulf/stocky/blob/main/docs/discovery-schema.json",
+  "title": "Stocky discovery snapshot (stocky.discovery/1)",
+  "description": "What tools/stocky-collect.sh prints and Stocky's discovery import reads (spec §13.2.4). The server is more lenient than this schema: it drops unknown fields and kinds, removes control characters and caps lengths (spec §13.3.2), but the collector must always produce output that validates here.",
+  "type": "object",
+  "required": ["schema", "collector", "collectedAt", "host", "items", "skipped", "warnings"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": "stocky.discovery/1" },
+    "collector": { "type": "string", "maxLength": 60, "pattern": "^stocky-collect " },
+    "collectedAt": {
+      "type": "string",
+      "description": "local time with offset, e.g. 2026-10-20T09:14:03+08:00",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}([+-]\\d{2}:\\d{2}|Z)$"
+    },
+    "host": {
+      "type": "object",
+      "required": ["platform", "virtual"],
+      "additionalProperties": false,
+      "properties": {
+        "hostname": { "type": "string", "maxLength": 80 },
+        "machineIdHash": {
+          "type": "string",
+          "description": "SHA-256 of /etc/machine-id; the raw ID is never sent",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "platform": { "type": "string", "maxLength": 40, "description": "uname -m" },
+        "virtual": { "const": false, "description": "the collector refuses VMs, so this is always false" },
+        "model": { "type": "string", "maxLength": 120 }
+      }
+    },
+    "items": { "type": "array", "maxItems": 200, "items": { "$ref": "#/$defs/item" } },
+    "skipped": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "type": "object",
+        "required": ["kind", "reason"],
+        "additionalProperties": false,
+        "properties": {
+          "kind": { "type": "string", "maxLength": 20 },
+          "reason": { "type": "string", "maxLength": 200 }
+        }
+      }
+    },
+    "warnings": { "type": "array", "maxItems": 50, "items": { "type": "string", "maxLength": 200 } }
+  },
+  "$defs": {
+    "item": {
+      "type": "object",
+      "required": ["kind"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "enum": ["system", "board", "cpu", "memory", "drive", "nic", "usb", "hat"] },
+        "vendor": { "type": "string", "maxLength": 200 },
+        "model": { "type": "string", "maxLength": 200 },
+        "serial": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "serial number; a MAC address for NICs; the UUID for HATs"
+        },
+        "sizeBytes": { "type": "integer", "minimum": 0, "description": "drives (decimal sizes), memory modules" },
+        "memoryBytes": { "type": "integer", "minimum": 0, "description": "system: RAM soldered on an SBC" },
+        "interface": { "type": "string", "maxLength": 20, "description": "drives: nvme, sata, usb, sd, emmc, …" },
+        "slot": { "type": "string", "maxLength": 120, "description": "ata1, nvme0, mmc0, DIMM_A1, usb 1-2, …" },
+        "memoryType": { "type": "string", "maxLength": 20 },
+        "speedMTs": { "type": "integer", "minimum": 0 },
+        "formFactor": { "type": "string", "maxLength": 20 },
+        "bus": { "type": "string", "maxLength": 20, "description": "nic and usb: pci, usb, platform, …" },
+        "onboard": { "type": "boolean", "description": "nic: built into the board" },
+        "removable": { "type": "boolean" },
+        "raw": {
+          "type": "object",
+          "description": "source fields for troubleshooting only; never matched on",
+          "maxProperties": 30,
+          "additionalProperties": { "type": ["string", "number"] }
+        }
+      }
+    }
+  }
+}

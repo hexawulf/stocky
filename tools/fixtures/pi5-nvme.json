@@ -1,0 +1,18 @@
+{
+  "schema": "stocky.discovery/1",
+  "collector": "stocky-collect 1.0.0",
+  "collectedAt": "2026-10-05T09:00:00+08:00",
+  "host": {"hostname": "pi-test", "machineIdHash": "sha256:3eb1bd439947eb762998e566ccc2e099c791118b2f40579cc4f7da2b5061b7f9", "platform": "aarch64", "virtual": false, "model": "Raspberry Pi 5 Model B Rev 1.0"},
+  "items": [
+    {"kind": "system", "vendor": "Raspberry Pi Ltd", "model": "Raspberry Pi 5 Model B Rev 1.0", "serial": "e4a1b2c3d4e5f607", "memoryBytes": 8589934592, "raw": {"revision": "d04170"}},
+    {"kind": "cpu", "vendor": "ARM", "model": "Cortex-A76", "raw": {"architecture": "aarch64"}},
+    {"kind": "drive", "model": "SN128", "serial": "0x1234abcd", "sizeBytes": 127865454592, "interface": "sd", "slot": "mmc0", "removable": false, "raw": {"name": "mmcblk0", "rotational": "0", "manfid": "0x000003", "oemid": "0x5344"}},
+    {"kind": "drive", "model": "Samsung SSD 980 PRO 1TB", "serial": "S5GXNF0R123456X", "sizeBytes": 1000204886016, "interface": "nvme", "slot": "nvme0", "removable": false, "raw": {"name": "nvme0n1", "wwn": "eui.002538b231b2c3d4", "rotational": "0"}},
+    {"kind": "nic", "model": "Onboard Ethernet (macb)", "serial": "2c:cf:67:00:00:01", "bus": "platform", "onboard": true, "raw": {"interface": "eth0", "driver": "macb", "address": "1f00100000.ethernet"}},
+    {"kind": "nic", "model": "Onboard Wi-Fi (brcmfmac)", "serial": "2c:cf:67:00:00:02", "bus": "sdio", "onboard": true, "raw": {"interface": "wlan0", "driver": "brcmfmac", "address": "mmc1:0001:1"}},
+    {"kind": "usb", "vendor": "Logitech", "model": "USB Keyboard", "bus": "usb", "slot": "usb 1-1", "raw": {"id": "046d:c31c", "class": "00"}},
+    {"kind": "hat", "vendor": "Pimoroni Ltd.", "model": "NVMe Base", "serial": "3f2504e0-4f89-11d3-9a0c-0305e82c3301", "raw": {"product_id": "0x0001", "product_ver": "0x0002"}}
+  ],
+  "skipped": [],
+  "warnings": []
+}

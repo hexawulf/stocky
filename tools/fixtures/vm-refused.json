@@ -1,0 +1,9 @@
+{
+  "schema": "stocky.discovery/1",
+  "collector": "stocky-collect 1.0.0",
+  "collectedAt": "2026-10-05T09:00:00+08:00",
+  "host": { "hostname": "vps-test", "platform": "x86_64", "virtual": true, "model": "KVM Virtual Machine" },
+  "items": [{ "kind": "drive", "vendor": "QEMU", "model": "QEMU HARDDISK", "sizeBytes": 40000000000, "interface": "virtio" }],
+  "skipped": [],
+  "warnings": []
+}
