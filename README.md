@@ -1,5 +1,10 @@
 # Stocky
 
+[![CI](https://github.com/hexawulf/stocky/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/hexawulf/stocky/actions/workflows/ci.yml)
+[![Docker Hub version](https://img.shields.io/docker/v/0xwulf/stocky?sort=semver&label=docker)](https://hub.docker.com/r/0xwulf/stocky)
+[![Docker Hub pulls](https://img.shields.io/docker/pulls/0xwulf/stocky)](https://hub.docker.com/r/0xwulf/stocky)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
 **Know what's in your machines, and what's in stock.**
 
 Stocky is a small, mobile-first, self-hosted inventory for homelab hardware:
@@ -46,6 +51,7 @@ user account (there's no public sign-up), and sign in at
 [docs/presets.md](docs/presets.md).
 
 Images are built for `linux/amd64` and `linux/arm64` (Raspberry Pi 4/5).
+Tags: `X.Y.Z`, `X.Y` and `latest`; what changed is in [CHANGELOG.md](CHANGELOG.md).
 
 ## Discovery collector
 
