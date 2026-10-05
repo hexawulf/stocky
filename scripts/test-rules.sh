@@ -116,7 +116,7 @@ check 'A creates location for B rejected' '400' "$(req POST /api/collections/loc
 check 'A creates transit location rejected' '400' "$(req POST /api/collections/locations/records "$TA" "{\"user\":\"$UA\",\"label\":\"Transit 2\",\"kind\":\"transit\"}")"
 check 'A creates location with referenced rejected' '400' "$(req POST /api/collections/locations/records "$TA" "{\"user\":\"$UA\",\"label\":\"Ref\",\"kind\":\"site\",\"referenced\":false}")"
 check 'A creates location with key rejected' '400' "$(req POST /api/collections/locations/records "$TA" "{\"user\":\"$UA\",\"label\":\"Keyed\",\"kind\":\"site\",\"key\":\"keyed\"}")"
-check 'A renames own site' '200' "$(req PATCH "/api/collections/locations/records/$A_OFC" "$TA" '{"label":"Office (brixhouse)"}')"
+check 'A renames own site' '200' "$(req PATCH "/api/collections/locations/records/$A_OFC" "$TA" '{"label":"Office (annex)"}')"
 check 'A sets referenced=false on own site rejected' '404' "$(req PATCH "/api/collections/locations/records/$A_LAB" "$TA" '{"referenced":false}')"
 check 'A changes kind rejected' '404' "$(req PATCH "/api/collections/locations/records/$A_OFC" "$TA" '{"kind":"transit"}')"
 check 'A moves own site to B rejected' '404' "$(req PATCH "/api/collections/locations/records/$A_OFC" "$TA" "{\"user\":\"$UB\"}")"
