@@ -44,6 +44,7 @@ ARG REVISION=unknown
 LABEL org.opencontainers.image.title="Stocky" \
       org.opencontainers.image.description="Hardware stock manager: track what's installed in your machines and what's in stock. PocketBase + Vue in one container" \
       org.opencontainers.image.source="https://github.com/hexawulf/stocky" \
+      org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${REVISION}" \
       io.pocketbase.version="${PB_VERSION}"
