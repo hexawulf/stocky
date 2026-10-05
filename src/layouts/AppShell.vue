@@ -30,18 +30,27 @@ const tabs = [
           </svg>
           <span>Import</span>
         </RouterLink>
+        <!-- Import is the only labelled control; About and Settings are icons -->
         <button
           type="button"
-          class="about-btn"
+          class="icon-btn"
           aria-label="About Stocky"
+          title="About Stocky"
           aria-haspopup="dialog"
           data-test="top-about"
           @click="about.open"
         >
           <span aria-hidden="true">ⓘ</span>
-          <span class="about-label">About</span>
         </button>
-        <RouterLink :to="{ name: 'settings' }" class="gear" aria-label="Settings">⚙</RouterLink>
+        <RouterLink
+          :to="{ name: 'settings' }"
+          class="icon-btn"
+          aria-label="Settings"
+          title="Settings"
+          data-test="top-settings"
+        >
+          <span aria-hidden="true">⚙</span>
+        </RouterLink>
       </div>
     </header>
 
@@ -121,43 +130,39 @@ const tabs = [
   color: var(--color-accent);
 }
 
-.about-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.3rem;
-  min-width: 44px;
-  height: 44px;
-  padding: 0 0.4rem;
-  border: none;
-  background: none;
-  color: var(--color-heading);
-  font: inherit;
-  font-size: 1.2rem;
-  cursor: pointer;
+.import:hover {
+  border-color: var(--color-accent);
 }
 
-/* phones: the icon only; the label from 768 px */
-.about-label {
-  display: none;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-@media (min-width: 768px) {
-  .about-label {
-    display: inline;
-  }
-}
-
-.gear {
+/* About and Settings: the same 44 px round icon button */
+.icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 44px;
   height: 44px;
-  font-size: 1.3rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
   color: var(--color-heading);
+  font: inherit;
+  font-size: 1.3rem;
+  font-weight: 400;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.icon-btn:hover,
+.icon-btn.router-link-active {
+  background: var(--color-background-mute);
+}
+
+.import:focus-visible,
+.icon-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 .offline {

@@ -64,6 +64,26 @@ afterEach(() => {
 })
 
 describe('About dialog (spec §4)', () => {
+  it('top bar: Import is the only labelled control; About and Settings are matching icons', async () => {
+    const w = await mountShell()
+    const about = w.get('[data-test="top-about"]')
+    const settings = w.get('[data-test="top-settings"]')
+    for (const [el, name] of [
+      [about, 'About Stocky'],
+      [settings, 'Settings'],
+    ]) {
+      expect(el.attributes('aria-label')).toBe(name)
+      expect(el.attributes('title')).toBe(name)
+      expect(el.classes()).toContain('icon-btn')
+      // no visible words, only the icon
+      expect(el.findAll('span:not([aria-hidden="true"])')).toHaveLength(0)
+    }
+    expect(about.text()).toBe('ⓘ')
+    expect(settings.text()).toBe('⚙')
+    expect(w.get('[data-test="top-import"]').text()).toBe('Import')
+    w.unmount()
+  })
+
   it('the top bar has an About button; the dialog opens as a modal with focus inside', async () => {
     const w = await mountShell()
     const btn = w.get('[data-test="top-about"]')
