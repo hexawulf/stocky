@@ -15,6 +15,12 @@ the numbers can always be explained, and the most recent one can be undone.
 It runs as **one Docker container**: [PocketBase](https://pocketbase.io)
 (auth, SQLite, API rules, realtime) serving a Vue 3 app. No cloud services.
 
+<p align="center">
+  <img src="docs/screenshots/login.png" alt="Stocky login screen" width="300">
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/home.png" alt="Stocky home screen: low stock, spare parts per site, installed" width="300">
+</p>
+
 ## What it does
 
 - **Parts and stock:** a catalog of part types with a unit (pcs, sheets, m),
