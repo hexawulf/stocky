@@ -1,6 +1,6 @@
 {
   "name": "stocky",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "Self-hosted homelab hardware inventory: what is in your machines, and what is in stock.",
   "license": "MIT",
