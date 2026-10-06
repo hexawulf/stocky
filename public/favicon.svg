@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Stocky: three crates on a shelf. Solid shapes on a 2-unit grid (1 px at 16 px). -->
+  <style>
+    svg { color: hsl(160, 100%, 30%); }
+    @media (prefers-color-scheme: dark) {
+      svg { color: hsl(160, 70%, 50%); }
+    }
+  </style>
+  <g fill="currentColor" fill-rule="evenodd">
+    <path d="M11 2h10a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H11a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z M14 4v2h4V4z" />
+    <path d="M3 14h10a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1z M6 16v2h4v-2z" />
+    <path d="M19 14h10a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H19a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1z M22 16v2h4v-2z" />
+    <rect x="0" y="26" width="32" height="4" rx="1" />
+  </g>
+</svg>

@@ -24,7 +24,7 @@ const tabs = [
       <RouterLink :to="{ name: 'home' }" class="brand">Stocky</RouterLink>
       <div class="top-actions">
         <!-- discovery import, from anywhere (spec §4.11) -->
-        <RouterLink :to="{ name: 'import' }" class="import" data-test="top-import">
+        <RouterLink :to="{ name: 'import' }" class="import-btn" data-test="top-import">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
             <path d="M4 14v5h16v-5 M12 3v11 M8 10l4 4 4-4" />
           </svg>
@@ -105,7 +105,7 @@ const tabs = [
   gap: 0.25rem;
 }
 
-.import {
+.import-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -117,7 +117,7 @@ const tabs = [
   font-weight: 600;
 }
 
-.import svg {
+.import-btn svg {
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
@@ -125,12 +125,12 @@ const tabs = [
   stroke-linejoin: round;
 }
 
-.import.router-link-active {
+.import-btn.router-link-active {
   border-color: var(--color-accent);
   color: var(--color-accent);
 }
 
-.import:hover {
+.import-btn:hover {
   border-color: var(--color-accent);
 }
 
@@ -159,7 +159,7 @@ const tabs = [
   background: var(--color-background-mute);
 }
 
-.import:focus-visible,
+.import-btn:focus-visible,
 .icon-btn:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;

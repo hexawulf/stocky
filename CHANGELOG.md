@@ -5,6 +5,21 @@ All notable changes to Stocky. The format follows
 [Semantic Versioning](https://semver.org/). Docker images are published as
 `0xwulf/stocky:<version>`, `:<major>.<minor>` and `:latest`.
 
+## [0.1.2] - 2026-10-06
+
+### Fixed
+
+- Import screen: no more large circle around the page. The top bar's Import
+  button and the import screen shared the class `import`, and a view's root
+  element inherits the layout's scoped styles, so the button's pill border
+  drew around the whole screen. The button's class is now `import-btn`.
+
+### Added
+
+- SVG favicon (crates on a shelf) in the accent colour, lighter on dark
+  browser tabs; `favicon.ico` (16, 32, 48 px) and a 180 px
+  `apple-touch-icon.png` from the same design.
+
 ## [0.1.1] - 2026-10-05
 
 ### Changed
@@ -37,5 +52,6 @@ Initial public release.
 - One multi-arch Docker image (amd64/arm64): PocketBase serving the Vue app,
   Alpine, non-root.
 
+[0.1.2]: https://github.com/hexawulf/stocky/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/hexawulf/stocky/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/hexawulf/stocky/releases/tag/v0.1.0
