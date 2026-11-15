@@ -116,7 +116,7 @@ check 'guest: 401, no versions' 401 "$(req GET /api/stocky/about '')"
 check 'superuser token: refused (users only)' '401|403' "$(req GET /api/stocky/about "$SU")"
 R=$(req GET /api/stocky/about "$TA")
 check 'signed-in user: 200' 200 "$R"
-check_eq '  ...PocketBase version from STOCKY_PB_VERSION' "${PB_VERSION_EXPECTED:-0.40.4}" "$(field "$R" .pocketbase)"
+check_eq '  ...PocketBase version from STOCKY_PB_VERSION' "${PB_VERSION_EXPECTED:-0.40.6}" "$(field "$R" .pocketbase)"
 check_eq '  ...schema = the newest migration file' "$(ls "$(dirname "$0")/../pb_migrations" | sort | tail -1 | cut -d_ -f1)" "$(field "$R" .schema)"
 
 echo '# presets from <pb_data>/stocky-presets.json (decision #27)'

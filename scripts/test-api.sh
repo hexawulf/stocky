@@ -15,7 +15,7 @@
 # Modified:    2026-10-05
 set -euo pipefail
 
-PB_VERSION=0.40.4 # keep in step with spec §12 #19 and the Dockerfile
+PB_VERSION=0.40.6 # keep in step with spec §12 #19 and the Dockerfile
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 PORT=${PORT:-8091}
 CACHE="$HOME/.cache/stocky"

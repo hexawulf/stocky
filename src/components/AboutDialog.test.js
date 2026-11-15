@@ -105,7 +105,7 @@ describe('About dialog (spec §4)', () => {
     expect(d.querySelector('[data-test="about-version"]').textContent.trim()).toBe(
       `Version ${APP_VERSION} · October 2026`,
     )
-    expect(d.textContent).toContain('PocketBase 0.40.4 (Go, SQLite)')
+    expect(d.textContent).toContain('PocketBase 0.40.6 (Go, SQLite)')
     expect(d.textContent).toContain('plain composables (no Pinia)')
     const mail = d.querySelector('[data-test="about-mail"]')
     expect(mail.getAttribute('href')).toBe('mailto:dev@0xwulf.dev')

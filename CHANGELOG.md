@@ -5,6 +5,22 @@ All notable changes to Stocky. The format follows
 [Semantic Versioning](https://semver.org/). Docker images are published as
 `0xwulf/stocky:<version>`, `:<major>.<minor>` and `:latest`.
 
+## [0.1.3] - 2026-11-16
+
+### Security
+
+- PocketBase 0.40.4 → 0.40.6: built with Go 1.27.3 (`net/http` and CA-bundle
+  fixes) and newer `golang.org/x/net`. This clears 7 HIGH CVEs in the binary.
+- The runtime stage now runs `apk upgrade`, which clears the Alpine musl and
+  zlib HIGH CVEs.
+- Releases are scanned with Trivy and blocked on any fixable CRITICAL.
+
+### Known
+
+- One HIGH remains inside the PocketBase binary: `golang.org/x/net` 0.61.0,
+  CVE-2026-78661 (`x/net/html` DoS), fixed in 0.62.0. It needs a PocketBase
+  release built with it; 0.40.6 is the newest.
+
 ## [0.1.2] - 2026-10-06
 
 ### Fixed
@@ -52,6 +68,7 @@ Initial public release.
 - One multi-arch Docker image (amd64/arm64): PocketBase serving the Vue app,
   Alpine, non-root.
 
+[0.1.3]: https://github.com/hexawulf/stocky/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/hexawulf/stocky/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/hexawulf/stocky/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/hexawulf/stocky/releases/tag/v0.1.0
