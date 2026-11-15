@@ -10,7 +10,7 @@
 ARG NODE_VERSION=24.21
 ARG ALPINE_VERSION=3.24
 # keep in step with spec §12 #19 and scripts/test-api.sh
-ARG PB_VERSION=0.40.4
+ARG PB_VERSION=0.40.6
 
 # --- web: build dist/ ----------------------------------------------------------
 FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-alpine${ALPINE_VERSION} AS web
@@ -37,6 +37,10 @@ RUN set -eu; \
 
 # --- runtime --------------------------------------------------------------------------
 FROM alpine:${ALPINE_VERSION} AS runtime
+# Alpine point releases lag security fixes; take them at build time. The
+# release's Trivy gate fails on a fixable CRITICAL (0.1.2 shipped musl and
+# zlib HIGHs this way).
+RUN apk upgrade --no-cache
 ARG PB_VERSION
 ARG VERSION=dev
 ARG REVISION=unknown
@@ -72,7 +76,7 @@ VOLUME ["/pb/pb_data"]
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD wget -qO- http://127.0.0.1:8080/api/health >/dev/null || exit 1
 
-# Migrations apply on start. The 0.40.4 defaults for these three flags are all
+# Migrations apply on start. The 0.40 defaults for these three flags are all
 # true: automigrate would write migration files whenever a collection is edited
 # in the dashboard, dev logs every SQL statement, hooksWatch restarts on file
 # changes (spec §12 #19). --indexFallback (SPA deep links) already defaults to true.

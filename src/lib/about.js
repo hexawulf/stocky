@@ -9,7 +9,7 @@ export const TAGLINE = "Know what's in your machines, and what's in stock."
 
 // [label, value]: keep in step with package.json and the Dockerfile
 export const STACK = [
-  ['Backend', 'PocketBase 0.40.4 (Go, SQLite), JS hooks and server routes'],
+  ['Backend', 'PocketBase 0.40.6 (Go, SQLite), JS hooks and server routes'],
   ['Realtime', 'PocketBase SSE subscriptions'],
   ['Frontend', 'Vue 3, Vite, vue-router'],
   ['State', 'plain composables (no Pinia)'],
