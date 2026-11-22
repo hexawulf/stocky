@@ -18,21 +18,15 @@ It runs as **one Docker container**: [PocketBase](https://pocketbase.io)
 (auth, SQLite, API rules, realtime SSE) serving a Vue 3 app. No cloud services, no external dependencies.
 
 <p align="center">
-  <img src="docs/screenshots/fleet-rack.png" alt="Stocky 1.1 Fleet Rack & Chassis View (Dark Mode)" width="460">
+  <img src="docs/screenshots/fleet-rack.png" alt="Stocky 1.1 Fleet Rack & Chassis View" width="460">
   &nbsp;&nbsp;
-  <img src="docs/screenshots/fleet-light.png" alt="Stocky 1.1 Fleet Rack & Chassis View (Light Mode)" width="460">
-</p>
-
-<p align="center">
   <img src="docs/screenshots/fleet-topology.png" alt="Stocky 1.1 Interactive Fleet Topology SVG" width="460">
-  &nbsp;&nbsp;
-  <img src="docs/screenshots/command-palette.png" alt="Stocky 1.1 Global Cmd+K Command Palette & Serial Search" width="460">
 </p>
 
 <p align="center">
   <img src="docs/screenshots/host-inspector.png" alt="Stocky 1.1 Host Hardware Anatomy Inspector" width="460">
   &nbsp;&nbsp;
-  <img src="docs/screenshots/stock-overview.png" alt="Stocky 1.1 Spare Stock & Installed Hardware View" width="460">
+  <img src="docs/screenshots/command-palette.png" alt="Stocky 1.1 Global Cmd+K Command Palette & Serial Search" width="460">
 </p>
 
 ## What's new in v1.1.0

@@ -232,38 +232,33 @@ test.describe('Stocky 1.0 E2E Smoke Suite', () => {
     await expect(page.locator('[data-host-card="vps-edge-01"]')).toBeVisible()
 
     if (CAPTURE_SCREENSHOTS) {
-      // Dark theme showcase screenshots
-      const curTheme = await page.evaluate(() => document.documentElement.getAttribute('data-theme'))
-      if (curTheme !== 'dark') {
-        await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'))
-      }
+      // Capture all 4 showcase screenshots in crisp Light Mode for the 2x2 README grid
+      await page.emulateMedia({ colorScheme: 'light' })
+      await page.evaluate(() => {
+        localStorage.setItem('stocky.theme', 'light')
+        document.documentElement.setAttribute('data-theme', 'light')
+      })
+
+      // 1. Fleet Rack & Chassis View (Light Mode)
       await page.screenshot({ path: resolve(ROOT, 'docs/screenshots/fleet-rack.png') })
 
+      // 2. Interactive Fleet Topology SVG (Light Mode)
       await page.locator('[data-test="mode-topology"]').click()
       await expect(page.locator('[data-test="fleet-topology"]')).toBeVisible()
       await page.screenshot({ path: resolve(ROOT, 'docs/screenshots/fleet-topology.png') })
 
-      // Light theme Rack & Chassis + Command Palette (⌘K) showcase screenshot
+      // 3. Global ⌘K Command Palette & Drive Serial Search (Light Mode)
       await page.locator('[data-test="mode-rack"]').click()
-      await page.locator('[data-test="top-theme"]').click()
-      await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'light'))
-      await page.screenshot({ path: resolve(ROOT, 'docs/screenshots/fleet-light.png') })
-
       await page.locator('[data-test="top-cmd"]').click()
       await expect(page.locator('[data-test="cmd-dialog"]')).toBeVisible()
       await page.locator('[data-test="cmd-input"]').fill('NVMe')
       await page.screenshot({ path: resolve(ROOT, 'docs/screenshots/command-palette.png') })
       await page.keyboard.press('Escape')
 
-      // Switch back to Dark for Host Inspector & Stock view screenshots
-      await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'))
+      // 4. Host Hardware Anatomy Inspector (Light Mode)
       await page.locator('[data-host-card="ws-compute-01"] a.host-link').click()
       await expect(page.locator('[data-test="host-anatomy-svg"]')).toBeVisible()
       await page.screenshot({ path: resolve(ROOT, 'docs/screenshots/host-inspector.png') })
-
-      await page.goto('/stock')
-      await expect(page.locator('[data-test="installed"]')).toBeVisible()
-      await page.screenshot({ path: resolve(ROOT, 'docs/screenshots/stock-overview.png') })
     }
   })
 })
