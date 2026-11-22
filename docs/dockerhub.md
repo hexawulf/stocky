@@ -21,7 +21,7 @@ realtime SSE) serving a Vue 3 app. No cloud services, no telemetry.
 Source, issues and docs: **[github.com/hexawulf/stocky](https://github.com/hexawulf/stocky)**
 
 | Fleet Rack & Chassis View | Interactive Fleet Topology SVG |
-|---|---|
+| :---: | :---: |
 | ![Stocky 1.1 Fleet Rack & Chassis View](https://raw.githubusercontent.com/hexawulf/stocky/main/docs/screenshots/fleet-rack.png) | ![Stocky 1.1 Interactive Fleet Topology SVG](https://raw.githubusercontent.com/hexawulf/stocky/main/docs/screenshots/fleet-topology.png) |
 | **Host Hardware Anatomy Inspector** | **Global `⌘K` Command Palette & Serial Search** |
 | ![Stocky 1.1 Host Hardware Anatomy Inspector](https://raw.githubusercontent.com/hexawulf/stocky/main/docs/screenshots/host-inspector.png) | ![Stocky 1.1 Global Cmd+K Command Palette & Serial Search](https://raw.githubusercontent.com/hexawulf/stocky/main/docs/screenshots/command-palette.png) |
