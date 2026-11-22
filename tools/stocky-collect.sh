@@ -753,7 +753,11 @@ else
 fi
 
 # --- GPUs (lspci / sysfs / nvidia-smi) -------------------------------------------------------
-if have nvidia-smi; then
+nvidia_bin=''
+if have nvidia-smi; then nvidia_bin='nvidia-smi'
+elif [ -x /usr/lib/wsl/lib/nvidia-smi ]; then nvidia_bin='/usr/lib/wsl/lib/nvidia-smi'
+fi
+if [ -n "$nvidia_bin" ]; then
   while IFS=',' read -r g_name g_uuid g_mem_mib g_bus; do
     g_name=$(trim "$g_name")
     [ -n "$g_name" ] || continue
@@ -764,7 +768,7 @@ if have nvidia-smi; then
     vram_b=''
     [[ $g_mem_mib =~ ^[0-9]+$ ]] && vram_b=$((g_mem_mib * 1048576))
     add_item "$(obj kind gpu vendor 'NVIDIA' model "$g_name" serial "$g_uuid" 'vramBytes#' "$vram_b" bus 'pci' slot "$g_bus")"
-  done < <(LC_ALL=C nvidia-smi --query-gpu=name,uuid,memory.total,pci.bus_id --format=csv,noheader,nounits 2>/dev/null || true)
+  done < <(LC_ALL=C "$nvidia_bin" --query-gpu=name,uuid,memory.total,pci.bus_id --format=csv,noheader,nounits 2>/dev/null || true)
 elif have lspci; then
   while IFS= read -r gline; do
     [ -n "$gline" ] || continue
