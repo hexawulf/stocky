@@ -1,19 +1,37 @@
 # Stocky
 
+[![CI](https://github.com/hexawulf/stocky/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/hexawulf/stocky/actions/workflows/ci.yml)
+[![Docker Hub version](https://img.shields.io/docker/v/0xwulf/stocky?sort=semver&label=docker)](https://hub.docker.com/r/0xwulf/stocky)
+[![Docker Hub pulls](https://img.shields.io/docker/pulls/0xwulf/stocky)](https://hub.docker.com/r/0xwulf/stocky)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](https://github.com/hexawulf/stocky/blob/main/LICENSE)
+
 **Auto-discover every machine in your fleet, visualize your entire hardware topology, and track every spare part and swap in one self-hosted container.**
 
 Stocky is a mobile-first, self-hosted homelab hardware tracker and spare parts ledger:
 spare parts at one or more sites, what's on its way between them (In transit),
 what's installed in which machine, and a live visual representation of your entire
-hardware fleet (Rack Chassis Cards, Interactive Topology SVG, Host Hardware Anatomy
-Inspector, and Spec Matrix). Every stock change is a dated movement, validated on the
-server in one transaction, and the most recent movement or discovery import can be
-undone within 24 hours.
+hardware fleet (Rack & Chassis Cards, Interactive Topology SVG, Host Hardware Anatomy
+Inspector, Spec Matrix, and a global `⌘K` Command Palette). Every stock change is a
+dated movement, validated on the server in one transaction, and the most recent
+movement or discovery import can be undone within 24 hours.
 
 One container: [PocketBase](https://pocketbase.io) (auth, SQLite, API rules,
 realtime SSE) serving a Vue 3 app. No cloud services, no telemetry.
 
 Source, issues and docs: **[github.com/hexawulf/stocky](https://github.com/hexawulf/stocky)**
+
+| Fleet Rack & Chassis View | Interactive Fleet Topology SVG |
+|---|---|
+| ![Stocky 1.1 Fleet Rack & Chassis View](https://raw.githubusercontent.com/hexawulf/stocky/main/docs/screenshots/fleet-rack.png) | ![Stocky 1.1 Interactive Fleet Topology SVG](https://raw.githubusercontent.com/hexawulf/stocky/main/docs/screenshots/fleet-topology.png) |
+| **Host Hardware Anatomy Inspector** | **Global `⌘K` Command Palette & Serial Search** |
+| ![Stocky 1.1 Host Hardware Anatomy Inspector](https://raw.githubusercontent.com/hexawulf/stocky/main/docs/screenshots/host-inspector.png) | ![Stocky 1.1 Global Cmd+K Command Palette & Serial Search](https://raw.githubusercontent.com/hexawulf/stocky/main/docs/screenshots/command-palette.png) |
+
+## What's new in v1.1.0
+
+- **Global `⌘K` / `Ctrl+K` Command Palette:** Instant fuzzy search from any screen (`⌘K`, `Ctrl+K`, or top-bar `⌕` button) across every **Host**, physical **Drive by Serial Number**, **GPU**, **NIC MAC / IPv4**, **Part Type**, and **Quick Actions**.
+- **Light / Dark / System Theme Toggle:** 1-click top-bar theme switcher (`☀` / `☾`) plus a `System / Light / Dark` selector in Settings (`/settings`).
+- **Fleet-First Navigation:** **Fleet** (`/` and `/fleet`) is the primary landing view, with **Stock** (`/stock` — spare stock per site, low-stock alerts, and installed units) second in the navigation bar.
+- **Hardened Multi-Platform Discovery (`stocky-collect.sh` v2.0 + `stocky-fleet-pull.sh`):** First-class support for bare-metal Linux, Raspberry Pi 4/5 (`arm64`), Cloud KVM VPSes, Synology DSM NASes (`synoinfo.conf` + `/sys/block` + Synology `smartctl`), and Windows WSL2 hosts (`/usr/lib/wsl/lib/nvidia-smi`).
 
 ## Quick start
 
@@ -37,7 +55,7 @@ superuser right after the first start, as shown above.
 
 Then open `http://<host>:8080/_/` (the dashboard), create your user account
 (there is no public sign-up), and sign in at `http://<host>:8080/`. On a new
-instance, click **Load Demo Fleet** on `/fleet` to explore a 4-node visual
+instance, click **Load Demo Fleet** on `/` to explore a 4-node visual
 homelab showcase right away, or click **＋ Connect Host** to generate an
 ingest token and discover your real machines.
 
@@ -46,7 +64,7 @@ ingest token and discover your real machines.
 ```yaml
 services:
   stocky:
-    image: 0xwulf/stocky:latest # or pin X.Y.Z to update deliberately
+    image: 0xwulf/stocky:1.1.0 # or :latest; pin X.Y.Z to update deliberately
     container_name: stocky
     restart: unless-stopped
     ports:
@@ -66,8 +84,8 @@ docker exec -it stocky /pb/pocketbase superuser upsert you@example.com 'a-long-p
 
 | Tag      | Meaning                                         |
 | -------- | ----------------------------------------------- |
-| `X.Y.Z`  | one exact release, e.g. `1.0.0`                 |
-| `X.Y`    | the newest patch release of that minor line     |
+| `1.1.0`  | one exact release (recommended for production)  |
+| `1.1`    | the newest patch release of the 1.1 minor line  |
 | `latest` | the newest release (pre-releases never move it) |
 
 - Platforms: `linux/amd64` and `linux/arm64` (Raspberry Pi 4/5) in one
