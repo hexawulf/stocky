@@ -386,9 +386,13 @@ fi
 
 syno_model=''
 syno_serial=''
-if [ -r "$R/etc/synoinfo.conf" ]; then
-  syno_model=$(sed -n 's/^upnpmodelname="\([^"]*\)".*/\1/p' "$R/etc/synoinfo.conf" 2>/dev/null | head -n 1)
-  [ -n "$syno_model" ] || syno_model=$(sed -n 's/^unique="synology_[^_]*_\([^"]*\)".*/\1/p' "$R/etc/synoinfo.conf" 2>/dev/null | head -n 1)
+if [ -r "$R/etc.defaults/synoinfo.conf" ]; then
+  syno_model=$(sed -n 's/^upnpmodelname="\([^"]*\)".*/\1/p' "$R/etc.defaults/synoinfo.conf" 2>/dev/null | head -n 1)
+  [ -n "$syno_model" ] || syno_model=$(sed -n 's/^unique="synology_[^_]*_\([^"]*\)".*/DS\1/p' "$R/etc.defaults/synoinfo.conf" 2>/dev/null | head -n 1)
+fi
+if [ -z "$syno_model" ] && [ -r "$R/etc/synoinfo.conf" ]; then
+  syno_model=$(sed -n 's/^unique="synology_[^_]*_\([^"]*\)".*/DS\1/p' "$R/etc/synoinfo.conf" 2>/dev/null | head -n 1)
+  [ -n "$syno_model" ] || syno_model=$(sed -n 's/^upnpmodelname="\([^"]*\)".*/\1/p' "$R/etc/synoinfo.conf" 2>/dev/null | head -n 1)
 fi
 if [ -r "$R/proc/sys/kernel/syno_serial" ]; then
   syno_serial=$(rd /proc/sys/kernel/syno_serial)
@@ -507,6 +511,22 @@ if have lscpu; then
       add_item "$(obj kind cpu vendor "$cpu_vendor" model "$cpu_model" slot "$([ "$sockets" -gt 1 ] && echo "socket $i")" raw "$(raw cores "${cores:-}" architecture "$(field Architecture)")")"
     done
     cpu_summary_json=$(obj model "$cpu_model" 'physicalCores#' "$phys_cores" 'logicalCores#' "$logical" 'maxMhz#' "$max_mhz")
+  fi
+elif [ -r "$R/proc/cpuinfo" ]; then
+  cpu_model=$(sed -n 's/^model name[[:space:]]*:[[:space:]]*//p' "$R/proc/cpuinfo" 2>/dev/null | head -n 1)
+  cpu_vendor=$(sed -n 's/^vendor_id[[:space:]]*:[[:space:]]*//p' "$R/proc/cpuinfo" 2>/dev/null | head -n 1)
+  cores=$(sed -n 's/^cpu cores[[:space:]]*:[[:space:]]*//p' "$R/proc/cpuinfo" 2>/dev/null | head -n 1)
+  logical=$(grep -c '^processor[[:space:]]*:' "$R/proc/cpuinfo" 2>/dev/null || true)
+  [ -n "$cores" ] || cores=$logical
+  case "$cpu_vendor" in
+    GenuineIntel) cpu_vendor=Intel ;;
+    AuthenticAMD) cpu_vendor=AMD ;;
+  esac
+  if [ -n "$cpu_model" ]; then
+    add_item "$(obj kind cpu vendor "$cpu_vendor" model "$cpu_model" raw "$(raw cores "${cores:-}" architecture "$platform")")"
+    cpu_summary_json=$(obj model "$cpu_model" 'physicalCores#' "$cores" 'logicalCores#' "$logical")
+  else
+    skip cpu 'lscpu not found'
   fi
 else
   skip cpu 'lscpu not found'
@@ -671,6 +691,63 @@ if have lsblk; then
     add_item "$(obj kind drive vendor "$vendor" model "$model" serial "$serial" 'sizeBytes#' "${d[SIZE]:-}" interface "$iface" slot "$(slot_of "$name")" 'removable?' "$([ "${d[RM]:-0}" = 1 ] && echo true || echo false)" smartStatus "$drive_smart" 'tempC#' "$drive_temp" 'wearPercent#' "$drive_wear" raw "$(raw name "$name" wwn "${d[WWN]:-}" rotational "${d[ROTA]:-}" "${rawextra[@]}")")"
     unset d
   done < <(LC_ALL=C lsblk -d -b -n -P -o NAME,MODEL,VENDOR,SERIAL,SIZE,TRAN,ROTA,TYPE,RM,WWN 2>/dev/null || true)
+elif [ -d "$R/sys/block" ]; then
+  smart_bin=''
+  if have smartctl; then smart_bin='smartctl'
+  elif [ -x /volume1/@appstore/synocli-disk/sbin/smartctl ]; then smart_bin='/volume1/@appstore/synocli-disk/sbin/smartctl'
+  fi
+  for bdev in "$R"/sys/block/*; do
+    [ -e "$bdev" ] || continue
+    name=${bdev##*/}
+    case "$name" in loop* | zram* | ram* | md* | dm-* | nbd* | sr* | synoboot*) continue ;; esac
+    sectors=$(rd "/sys/block/$name/size")
+    [[ $sectors =~ ^[0-9]+$ ]] && [ "$sectors" -gt 0 ] || continue
+    size_bytes=$((sectors * 512))
+    model=$(rd "/sys/block/$name/device/model")
+    vendor=$(rd "/sys/block/$name/device/vendor")
+    [ "$vendor" = ATA ] && vendor=''
+    serial=$(rd "/sys/block/$name/device/serial")
+    rota=$(rd "/sys/block/$name/queue/rotational")
+    rm_flag=$(rd "/sys/block/$name/removable")
+    iface=''
+    case "$name" in
+      nvme*) iface='nvme' ;;
+      sata* | sd*) iface='sata' ;;
+      mmcblk*) iface='sd' ;;
+      vd*) iface='virtio' ;;
+    esac
+    drive_smart=''
+    drive_temp=''
+    drive_wear=''
+    if [ -n "$smart_bin" ]; then
+      s_json=''
+      if s_json=$(as_root "$smart_bin" -i -H -A -j "/dev/$name" 2>/dev/null) || s_json=$(as_root "$smart_bin" -i -H -A -j -d sat "/dev/$name" 2>/dev/null); then
+        if [ -z "$serial" ]; then
+          serial=$(sed -n 's/^[[:space:]]*"serial_number":[[:space:]]*"\(.*\)",\{0,1\}$/\1/p' <<<"$s_json" | head -n 1)
+        fi
+        if grep -q '"passed":[[:space:]]*true' <<<"$s_json"; then
+          drive_smart='PASSED'
+          [ "$smart_overall" = 'unknown' ] && smart_overall='ok'
+        elif grep -q '"passed":[[:space:]]*false' <<<"$s_json"; then
+          drive_smart='FAILED'
+          smart_overall='fail'
+          unhealthy_drives+=("$(json_str "$name (${model:-disk}): SMART FAILED")")
+        fi
+        t_val=$(sed -n 's/^[[:space:]]*"temperature":[[:space:]]*{[[:space:]]*"current":[[:space:]]*\([0-9]\+\).*/\1/p' <<<"$s_json" | head -n 1)
+        [ -n "$t_val" ] || t_val=$(sed -n '/"temperature"[[:space:]]*:/,/}/ s/^[[:space:]]*"current":[[:space:]]*\([0-9]\+\).*/\1/p' <<<"$s_json" | head -n 1)
+        if [[ $t_val =~ ^[0-9]+$ ]]; then
+          drive_temp=$t_val
+          if [ -z "$smart_max_temp" ] || [ "$t_val" -gt "$smart_max_temp" ]; then
+            smart_max_temp=$t_val
+          fi
+        fi
+      fi
+    fi
+    placeholder "$serial" && serial=''
+    storage_total_bytes=$((storage_total_bytes + size_bytes))
+    storage_drive_count=$((storage_drive_count + 1))
+    add_item "$(obj kind drive vendor "$vendor" model "$model" serial "$serial" 'sizeBytes#' "$size_bytes" interface "$iface" slot "$(slot_of "$name")" 'removable?' "$([ "$rm_flag" = 1 ] && echo true || echo false)" smartStatus "$drive_smart" 'tempC#' "$drive_temp" 'wearPercent#' "$drive_wear" raw "$(raw name "$name" rotational "$rota")")"
+  done
 else
   skip drive 'lsblk not found'
 fi

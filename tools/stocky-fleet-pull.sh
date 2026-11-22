@@ -90,7 +90,7 @@ while IFS= read -r raw_line || [ -n "$raw_line" ]; do
   info "collecting from $target..."
   snap="$work/snap_${ok_count}.json"
   resp="$work/resp_${ok_count}.json"
-  if ssh -n -o BatchMode=yes -o ConnectTimeout=10 "$target" "bash -s -- $extra_flags" <"$COLLECT" >"$snap" 2>>"$LOG"; then
+  if ssh -o BatchMode=yes -o ConnectTimeout=10 "$target" "bash -s -- $extra_flags" <"$COLLECT" >"$snap" 2>>"$LOG"; then
     code=$(printf 'Authorization: Bearer %s\n' "$tok" | curl -sS -o "$resp" -w '%{http_code}' --connect-timeout 10 --max-time 30 -X POST "$push_url/api/stocky/ingest" -H 'Content-Type: application/json' -H @- --data-binary "@$snap" 2>>"$LOG" || echo 000)
     if [ "$code" = 200 ] || [ "$code" = 201 ]; then
       info "  $target -> pushed ok (HTTP $code)"

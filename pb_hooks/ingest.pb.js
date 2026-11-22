@@ -115,6 +115,8 @@ routerAdd('POST', '/api/stocky/ingest', (e) => {
           const norm = (v) =>
             String(v || '')
               .toLowerCase()
+              .replace(/plus/g, '+')
+              .replace(/-brix$/g, '')
               .replace(/[\s_.-]+/g, '')
           const want = norm(snapshot.host.hostname)
           if (want) {
