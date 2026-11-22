@@ -4,6 +4,8 @@
 import { CURRENCIES } from './format.js'
 
 const LAST_CURRENCY = 'stocky.lastCurrency'
+const FLEET_NAME = 'stocky.fleetName'
+const STALE_HOURS = 'stocky.staleHours'
 
 function storage() {
   try {
@@ -30,4 +32,38 @@ export function setLastCurrency(currency) {
   } catch {
     // not saved; next time the user picks again
   }
+}
+
+export function getFleetName() {
+  try {
+    const v = (storage()?.getItem(FLEET_NAME) ?? '').trim()
+    return v ? v.slice(0, 60) : 'My Homelab Fleet'
+  } catch {
+    return 'My Homelab Fleet'
+  }
+}
+
+export function setFleetName(name) {
+  try {
+    const v = String(name ?? '')
+      .trim()
+      .slice(0, 60)
+    if (v) storage()?.setItem(FLEET_NAME, v)
+  } catch {}
+}
+
+export function getStaleHours() {
+  try {
+    const n = Number(storage()?.getItem(STALE_HOURS))
+    return Number.isInteger(n) && n >= 1 && n <= 720 ? n : 48
+  } catch {
+    return 48
+  }
+}
+
+export function setStaleHours(hours) {
+  try {
+    const n = Number(hours)
+    if (Number.isInteger(n) && n >= 1 && n <= 720) storage()?.setItem(STALE_HOURS, String(n))
+  } catch {}
 }

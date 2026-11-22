@@ -1,0 +1,12 @@
+{
+  "schema": "stocky.discovery/2",
+  "collector": "stocky-collect 2.0.0",
+  "collectedAt": "2026-10-05T09:00:00+08:00",
+  "host": {"hostname": "dev-wsl2", "machineIdHash": "sha256:ffdcea206a98c2bc39251f8a25e5c342eaee006309536434b23a2270bded60f4", "platform": "x86_64", "virtual": true, "virtualType": "wsl", "model": "WSL2 Virtual Machine", "os": {"name": "Ubuntu", "version": "24.04", "kernel": "5.15.167.4-microsoft-standard-WSL2"}, "uptimeSeconds": 12000, "cpuSummary": {"model": "AMD Ryzen 7 7840HS w/ Radeon 780M Graphics", "physicalCores": 8, "logicalCores": 16}, "memorySummary": {"totalBytes": 16777216000, "swapBytes": 4294967296, "zramBytes": 0}, "storageSummary": {"totalBytes": 274877906944, "driveCount": 1}, "smartSummary": {"status": "unknown", "unhealthyDrives": []}},
+  "items": [
+    {"kind": "cpu", "vendor": "AMD", "model": "AMD Ryzen 7 7840HS w/ Radeon 780M Graphics", "raw": {"cores": "8", "architecture": "x86_64"}},
+    {"kind": "drive", "vendor": "Msft", "model": "Virtual Disk", "sizeBytes": 274877906944, "removable": false, "raw": {"name": "sdc", "rotational": "0"}}
+  ],
+  "skipped": [],
+  "warnings": ["drive serials behind USB bridges: smartctl needs sudo (sudo -n is not allowed without a password here)"]
+}

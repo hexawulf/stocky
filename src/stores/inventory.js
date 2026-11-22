@@ -134,6 +134,10 @@ const parts = computed(() =>
 const lowStock = computed(() =>
   parts.value.filter((p) => p.lowStockEnabled && p.spareTotal <= p.lowStockThreshold),
 )
+const totalDriftCount = computed(() =>
+  hosts.value.reduce((acc, h) => acc + (Number(h.driftCount) > 0 ? Number(h.driftCount) : 0), 0),
+)
+const driftHostCount = computed(() => hosts.value.filter((h) => Number(h.driftCount) > 0).length)
 // spec §7.5: no writes while offline (or before the data is there)
 const canWrite = computed(() => online.value && status.value === 'ready')
 
@@ -149,6 +153,8 @@ export function useInventory() {
     categories,
     parts,
     lowStock,
+    totalDriftCount,
+    driftHostCount,
     canWrite,
     start,
     stop,

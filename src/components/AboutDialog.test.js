@@ -22,7 +22,12 @@ async function mountShell() {
       {
         path: '/',
         component: AppShell,
-        children: [{ path: '', name: 'home', component: stub }],
+        children: [
+          { path: '', name: 'home', component: stub },
+          { path: 'fleet', name: 'fleet', component: stub },
+          { path: 'fleet/drift', name: 'fleet-drift', component: stub },
+          { path: 'fleet/:id', name: 'host-detail', component: stub },
+        ],
       },
       { path: '/parts', name: 'parts', component: stub },
       { path: '/record', name: 'record', component: stub },
@@ -103,10 +108,11 @@ describe('About dialog (spec §4)', () => {
     await openAbout(w)
     const d = dialog()
     expect(d.querySelector('[data-test="about-version"]').textContent.trim()).toBe(
-      `Version ${APP_VERSION} · October 2026`,
+      `Version ${APP_VERSION} · November 2026`,
     )
     expect(d.textContent).toContain('PocketBase 0.40.6 (Go, SQLite)')
     expect(d.textContent).toContain('plain composables (no Pinia)')
+    expect(d.textContent).toContain('Erling Wulf Weinreich (0xWulf)')
     const mail = d.querySelector('[data-test="about-mail"]')
     expect(mail.getAttribute('href')).toBe('mailto:dev@0xwulf.dev')
     w.unmount()

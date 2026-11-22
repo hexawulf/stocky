@@ -70,3 +70,7 @@ Desktop.ini
 
 # PocketBase data (database, settings, SMTP credentials)
 pb_data/
+
+# Playwright artifacts
+test-results/
+playwright-report/

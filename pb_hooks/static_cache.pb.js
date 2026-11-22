@@ -34,6 +34,29 @@ routerUse((e) => {
     return e.next()
   }
 
+  if (path === '/tools/stocky-collect.sh' || path === '/tools/stocky-collect.sh.sha256') {
+    const dir = $os.getenv('STOCKY_PUBLIC_DIR') || `${__hooks}/../pb_public`
+    let content = ''
+    try {
+      content = toString($os.readFile(dir + path))
+    } catch (_) {
+      try {
+        // fallback for dev/test when tools/ is in repo root next to pb_hooks
+        if (path === '/tools/stocky-collect.sh') {
+          content = toString($os.readFile(`${__hooks}/../tools/stocky-collect.sh`))
+        } else {
+          const script = toString($os.readFile(`${__hooks}/../tools/stocky-collect.sh`))
+          content = `${$security.sha256(script)}  stocky-collect.sh\n`
+        }
+      } catch (_) {
+        return e.string(404, 'Not found')
+      }
+    }
+    e.response.header().set('Cache-Control', 'no-cache')
+    e.response.header().set('Content-Type', 'text/plain; charset=utf-8')
+    return e.string(200, content)
+  }
+
   e.response.header().set('Cache-Control', 'no-cache')
   return e.next()
 })

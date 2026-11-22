@@ -1,0 +1,14 @@
+{
+  "schema": "stocky.discovery/2",
+  "collector": "stocky-collect 2.0.0",
+  "collectedAt": "2026-10-05T09:00:00+08:00",
+  "host": {"hostname": "vps-node-01", "machineIdHash": "sha256:11820b5c8c71152eb9613525778941e6ab169f85c41630b57e21dbfed4b59253", "platform": "x86_64", "virtual": true, "virtualType": "kvm", "model": "QEMU Standard PC (Q35 + ICH9, 2009)", "os": {"name": "Ubuntu", "version": "26.04", "kernel": "6.12.0-generic"}, "uptimeSeconds": 432000, "cpuSummary": {"model": "AMD EPYC-Genoa Processor", "physicalCores": 4, "logicalCores": 4}, "memorySummary": {"totalBytes": 8388608000, "swapBytes": 2147483648, "zramBytes": 0}, "storageSummary": {"totalBytes": 85899345920, "driveCount": 1}, "smartSummary": {"status": "unknown", "unhealthyDrives": []}},
+  "items": [
+    {"kind": "system", "vendor": "QEMU", "model": "Standard PC (Q35 + ICH9, 2009)"},
+    {"kind": "cpu", "vendor": "AMD", "model": "AMD EPYC-Genoa Processor", "raw": {"cores": "4", "architecture": "x86_64"}},
+    {"kind": "drive", "vendor": "0x1af4", "model": "QEMU HARDDISK", "serial": "drive-scsi0-0-0", "sizeBytes": 85899345920, "interface": "virtio", "slot": "virtio1", "removable": false, "raw": {"name": "vda", "rotational": "0"}},
+    {"kind": "nic", "model": "VirtIO Ethernet (virtio_net)", "serial": "52:54:00:12:34:56", "bus": "pci", "onboard": true, "raw": {"interface": "eth0", "driver": "virtio_net", "address": "virtio0"}}
+  ],
+  "skipped": [],
+  "warnings": []
+}

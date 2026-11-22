@@ -1,38 +1,57 @@
 # tools
 
-## stocky-collect.sh
+## stocky-collect.sh (v2.0.0)
 
-A read-only hardware snapshot of one physical Linux machine for Stocky's
-discovery import (spec §13). It prints JSON (`stocky.discovery/1`, see
-`docs/discovery-schema.json`) that you upload in Stocky under
-Settings → Hosts → a host → Import discovery. Stocky shows a preview and writes
-only what you confirm.
+A read-only hardware snapshot of a Linux machine for Stocky's discovery import
+and automated fleet ingest. Prints JSON (`stocky.discovery/2`, see
+`docs/discovery-schema.json`) to stdout, `-o FILE`, or pushes directly to
+Stocky's `/api/stocky/ingest` endpoint via `--push URL`.
+
+Supports bare-metal Linux, Raspberry Pi / ARM64 SBCs, Cloud KVM VPSes,
+Synology DSM NASes, and WSL2 (`--physical-only` restores v1's exit-3 refusal
+of virtual machines and containers).
 
 ```sh
-tools/stocky-collect.sh --dry-run                  # what it would read and run
+# What it would read and run:
+tools/stocky-collect.sh --dry-run
+
+# Automated push using a scoped ingest token file (mode 0600, never visible in ps):
+tools/stocky-collect.sh --push https://stocky.example.com --token-file ~/.config/stocky/ingest.token
+
+# Print ready-to-install nightly cron or systemd user timer:
+tools/stocky-collect.sh --push https://stocky.example.com --token-file ~/.config/stocky/ingest.token --print-cron
+tools/stocky-collect.sh --push https://stocky.example.com --token-file ~/.config/stocky/ingest.token --print-systemd
+
+# Offline JSON file for manual upload in Stocky → Import:
 tools/stocky-collect.sh -o ~/stocky-$(hostname).json
-tools/stocky-collect.sh --no-sudo -o …             # skip the two sudo commands
 ```
 
-- Needs only what a standard Ubuntu or Raspberry Pi OS install has (`lsblk`,
-  `lscpu`, `/sys`, `/proc`). It uses `smartctl`, `lspci` and `lsusb` if present.
-- `sudo -n` (never prompts) runs only `dmidecode` (x86 memory modules, board and
-  system serials) and `smartctl -i` (drive serials behind USB bridges). Without
-  sudo those are listed under `skipped` / `warnings`.
-- Refuses VMs, containers and WSL with exit code 3 and no output.
-- Logs to `~/logs/stocky-collect_YYYYMMDD_HHMMSS.log`.
-- The output contains serial numbers and MAC addresses (needed for matching).
-  `/etc/machine-id` is only sent as a SHA-256 hash.
+- Needs only standard Linux utilities (`lsblk`, `lscpu`, `/sys`, `/proc`).
+  Uses `smartctl`, `lspci`, `lsusb`, and `nvidia-smi` if present.
+- `sudo -n` (never prompts) runs only `dmidecode` (x86 memory modules, board
+  and system serials) and `smartctl` (drive serials and SMART health/temperature).
+  `--no-sudo` skips both cleanly.
+- Served directly by every running Stocky container at `/tools/stocky-collect.sh`
+  alongside `/tools/stocky-collect.sh.sha256`.
+- Logs to `~/logs/stocky-collect_YYYYMMDD_HHMMSS.log` (never logs the token).
 
-**Copies elsewhere** (for example in a scripts repository you deploy to your
-machines) should record the Stocky commit they came from in the `# Source:`
-header line, and be updated only by copying a newer version from here, never
-edited in place (spec §13.2.1).
+## stocky-fleet-pull.sh
+
+Central read-only SSH collector for hosts that cannot push inbound to Stocky
+(such as Synology NAS boxes or isolated LAN / WireGuard nodes). Reads a host
+list (`tools/hosts.conf.example`), streams `stocky-collect.sh` over SSH, and
+posts each snapshot to `/api/stocky/ingest`.
+
+```sh
+tools/stocky-fleet-pull.sh -c ~/.config/stocky/hosts.conf \
+  --push https://stocky.example.com --token-file ~/.config/stocky/ingest.token
+```
 
 ## test-collect.sh
 
-Runs the collector against fake machines (fake `/sys`/`/proc` trees and
-stubbed commands, via the test-only `STOCKY_COLLECT_ROOT`) and validates the
-output against the schema. Part of `npm run test:api`.
-`tools/test-collect.sh --write-fixtures` regenerates `fixtures/pi5-nvme.json`,
-`x86-desktop.json` and `hostile-strings.json`.
+Runs the collector against 8 fake machine profiles (Pi 5 with NVMe, x86 desktop,
+KVM cloud VPS, Synology DSM NAS, WSL2 host, NVIDIA GPU workstation, SMART
+warning host, and hostile strings) and validates output against
+`docs/discovery-schema.json`. Part of `npm run test:api`.
+`tools/test-collect.sh --write-fixtures` regenerates the committed fixtures in
+`tools/fixtures/`.

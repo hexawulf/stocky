@@ -16,9 +16,13 @@ CLAUDE*.md
 # not used by the image
 docs
 scripts
+e2e
+test-results
+playwright-report
 spec.md
 README.md
 compose.yaml
-tools
+tools/*
+!tools/stocky-collect.sh
 Dockerfile
 .dockerignore

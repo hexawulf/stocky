@@ -12,6 +12,7 @@ so changing `seedPreset` later has no effect. Empty means `standard`.
 | --- | --- |
 | `standard` | One site (Home), In transit, nine generic categories, no hosts |
 | `example` | An example homelab: sites Lab (USD) and Office (EUR), In transit, eight hosts (`pi-a`, `pi-b`, `workstation`, `nas-a`, `router-a` at Lab; `nas-b`, `minipc`, `router-b` at Office), eight categories |
+| `demo_fleet` | A populated 4-node visual showcase (`sbc-node-01`, `ws-compute-01` with RTX 4070 Ti SUPER, `nas-vault-01` 4-bay NAS, `vps-edge-01` Cloud KVM VPS) with complete hardware specs, serialized units, spares, and movements — also loadable in one click from an empty `/fleet` screen |
 
 ## Your own: `stocky-presets.json`
 

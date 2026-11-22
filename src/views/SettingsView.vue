@@ -10,9 +10,20 @@ import { describeError } from '@/lib/errors.js'
 import { formatQty, placeLabel } from '@/lib/format.js'
 import { showToast } from '@/stores/toast.js'
 import { useAbout } from '@/composables/useAbout.js'
+import { getFleetName, getStaleHours, setFleetName, setStaleHours } from '@/lib/prefs.js'
 
 const { user, logout } = useAuth()
 const { records, canWrite } = useInventory()
+
+const fleetName = ref(getFleetName())
+const staleHours = ref(getStaleHours())
+function saveFleetPrefs() {
+  setFleetName(fleetName.value)
+  setStaleHours(Number(staleHours.value))
+  fleetName.value = getFleetName()
+  staleHours.value = getStaleHours()
+  showToast('Fleet preferences saved')
+}
 
 const count = (o, pred = (x) => !x.retired) => Object.values(o).filter(pred).length
 const lists = computed(() => [
@@ -104,6 +115,25 @@ const { open: openAbout } = useAbout()
         </button>
       </li>
     </ul>
+
+    <h2>Fleet topology preferences</h2>
+    <form class="fleet-prefs" @submit.prevent="saveFleetPrefs">
+      <label class="pref-field">
+        <span>Fleet title</span>
+        <input v-model="fleetName" maxlength="60" data-test="settings-fleet-name" />
+      </label>
+      <label class="pref-field">
+        <span>Stale threshold (hours)</span>
+        <input
+          v-model.number="staleHours"
+          type="number"
+          min="1"
+          max="720"
+          data-test="settings-stale-hours"
+        />
+      </label>
+      <button type="submit" class="btn btn-secondary">Save preferences</button>
+    </form>
 
     <h2>Recalculate totals</h2>
     <p class="muted">
@@ -228,6 +258,31 @@ const { open: openAbout } = useAbout()
 
 .muted {
   color: var(--color-text-muted);
+}
+
+.fleet-prefs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-width: 28rem;
+}
+
+.pref-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.pref-field input {
+  min-height: 42px;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--color-border-hover);
+  border-radius: 10px;
+  background: var(--color-background-soft);
+  color: var(--color-text);
+  font: inherit;
 }
 
 .recalc {

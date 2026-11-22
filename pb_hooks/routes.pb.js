@@ -58,6 +58,46 @@ routerAdd(
   $apis.requireAuth('users'),
 )
 
+// load the Demo Fleet into an empty account so any Docker user can explore
+// the visual Fleet Rack, Topology SVG, and Host Inspector in one click
+routerAdd(
+  'POST',
+  '/api/stocky/demo-fleet',
+  (e) => {
+    const s = require(`${__hooks}/lib/stocky.js`)
+    return s.respond(e, () => {
+      const uid = e.auth.id
+      let result = null
+      e.app.runInTransaction((txApp) => {
+        const existingHosts = txApp.findRecordsByFilter('hosts', 'user = {:uid}', '', 1, 0, {
+          uid: uid,
+        })
+        const existingParts = txApp.findRecordsByFilter('parts', 'user = {:uid}', '', 1, 0, {
+          uid: uid,
+        })
+        if (existingHosts.length > 0 || existingParts.length > 0) {
+          s.fail(
+            'not_empty',
+            'Demo Fleet can only be loaded when your hosts and parts catalog are empty',
+          )
+        }
+        // remove unreferenced default locations/categories so demo_fleet seeds cleanly
+        for (const col of ['categories', 'locations']) {
+          const recs = txApp.findRecordsByFilter(col, 'user = {:uid}', '', 0, 0, { uid: uid })
+          for (const r of recs) txApp.delete(r)
+        }
+        const user = txApp.findRecordById('users', uid)
+        user.set('seedPreset', 'demo_fleet')
+        user.set('seedVersion', 0)
+        txApp.saveNoValidate(user)
+        result = s.seed(txApp, uid)
+      })
+      return e.json(200, result)
+    })
+  },
+  $apis.requireAuth('users'),
+)
+
 // compare a part's stored totals with a replay of its history; body.fix = true writes the replay
 routerAdd(
   'POST',

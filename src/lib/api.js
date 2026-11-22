@@ -110,3 +110,46 @@ export function listQuietImports() {
 export function getAbout() {
   return pb.send('/api/stocky/about', { method: 'GET' })
 }
+
+// --- fleet tokens, automated ingest & drift inbox (Stocky 1.0) ----------------------------
+
+export function createIngestToken(input) {
+  return post('/api/stocky/tokens', input)
+}
+
+export function revokeIngestToken(id) {
+  return post(`/api/stocky/tokens/${encodeURIComponent(id)}/revoke`)
+}
+
+export function listIngestTokens() {
+  return pb.collection('ingest_tokens').getFullList({ sort: '-created' })
+}
+
+export function listPendingSnapshots(filter = '') {
+  return pb.collection('pending_snapshots').getFullList({
+    sort: '-created',
+    ...(filter ? { filter } : {}),
+  })
+}
+
+export function applyDriftSnapshot(id, payload = {}) {
+  return post(`/api/stocky/drift/${encodeURIComponent(id)}/apply`, {
+    date: todayLocal(),
+    ...payload,
+  })
+}
+
+export function dismissDriftSnapshot(id) {
+  return post(`/api/stocky/drift/${encodeURIComponent(id)}/dismiss`)
+}
+
+export function listUnits(filter = '') {
+  return pb.collection('units').getFullList({
+    sort: 'serialKey',
+    ...(filter ? { filter } : {}),
+  })
+}
+
+export function loadDemoFleet() {
+  return post('/api/stocky/demo-fleet')
+}

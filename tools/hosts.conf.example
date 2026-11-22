@@ -1,0 +1,11 @@
+# Example host list for tools/stocky-fleet-pull.sh
+# Copy to a private location (e.g. ~/.config/stocky/hosts.conf) and edit.
+# Format: <ssh-target-or-alias> [optional stocky-collect.sh flags]
+#
+# Standard Linux / SBC hosts (uses sudo -n for dmidecode/smartctl if allowed):
+# pi-a
+# workstation
+#
+# Synology DSM NAS or unprivileged SSH account (skip sudo):
+# nas-a --no-sudo
+# admin@192.0.2.50 --no-sudo

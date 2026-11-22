@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/hexawulf/stocky/blob/main/docs/discovery-schema.json",
-  "title": "Stocky discovery snapshot (stocky.discovery/1)",
-  "description": "What tools/stocky-collect.sh prints and Stocky's discovery import reads (spec §13.2.4). The server is more lenient than this schema: it drops unknown fields and kinds, removes control characters and caps lengths (spec §13.3.2), but the collector must always produce output that validates here.",
+  "title": "Stocky discovery snapshot (stocky.discovery/1 & stocky.discovery/2)",
+  "description": "What tools/stocky-collect.sh prints and Stocky's discovery import and automated ingest read. Supports stocky.discovery/2 (universal bare-metal, SBC, KVM/cloud VPS, NAS, WSL2, GPU, SMART telemetry) while retaining full backward compatibility with stocky.discovery/1.",
   "type": "object",
   "required": ["schema", "collector", "collectedAt", "host", "items", "skipped", "warnings"],
   "additionalProperties": false,
   "properties": {
-    "schema": { "const": "stocky.discovery/1" },
+    "schema": { "enum": ["stocky.discovery/1", "stocky.discovery/2"] },
     "collector": { "type": "string", "maxLength": 60, "pattern": "^stocky-collect " },
     "collectedAt": {
       "type": "string",
@@ -26,8 +26,61 @@
           "pattern": "^sha256:[0-9a-f]{64}$"
         },
         "platform": { "type": "string", "maxLength": 40, "description": "uname -m" },
-        "virtual": { "const": false, "description": "the collector refuses VMs, so this is always false" },
-        "model": { "type": "string", "maxLength": 120 }
+        "virtual": { "type": "boolean", "description": "true for VMs/VPS/WSL, false for physical/NAS" },
+        "virtualType": {
+          "enum": ["bare-metal", "kvm", "vmware", "hyperv", "wsl", "lxc", "xen", "cloud", "nas", "unknown"]
+        },
+        "model": { "type": "string", "maxLength": 120 },
+        "os": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": { "type": "string", "maxLength": 80 },
+            "version": { "type": "string", "maxLength": 80 },
+            "kernel": { "type": "string", "maxLength": 80 }
+          }
+        },
+        "uptimeSeconds": { "type": "integer", "minimum": 0 },
+        "cpuSummary": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "model": { "type": "string", "maxLength": 120 },
+            "physicalCores": { "type": "integer", "minimum": 0 },
+            "logicalCores": { "type": "integer", "minimum": 0 },
+            "maxMhz": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "memorySummary": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "totalBytes": { "type": "integer", "minimum": 0 },
+            "swapBytes": { "type": "integer", "minimum": 0 },
+            "zramBytes": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "storageSummary": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "totalBytes": { "type": "integer", "minimum": 0 },
+            "driveCount": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "smartSummary": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": { "enum": ["ok", "warn", "fail", "unknown"] },
+            "maxTempC": { "type": "integer", "minimum": 0 },
+            "unhealthyDrives": {
+              "type": "array",
+              "maxItems": 50,
+              "items": { "type": "string", "maxLength": 120 }
+            }
+          }
+        }
       }
     },
     "items": { "type": "array", "maxItems": 200, "items": { "$ref": "#/$defs/item" } },
@@ -52,7 +105,7 @@
       "required": ["kind"],
       "additionalProperties": false,
       "properties": {
-        "kind": { "enum": ["system", "board", "cpu", "memory", "drive", "nic", "usb", "hat"] },
+        "kind": { "enum": ["system", "board", "cpu", "memory", "drive", "nic", "usb", "hat", "gpu", "raid"] },
         "vendor": { "type": "string", "maxLength": 200 },
         "model": { "type": "string", "maxLength": 200 },
         "serial": {
@@ -60,16 +113,21 @@
           "maxLength": 200,
           "description": "serial number; a MAC address for NICs; the UUID for HATs"
         },
-        "sizeBytes": { "type": "integer", "minimum": 0, "description": "drives (decimal sizes), memory modules" },
+        "sizeBytes": { "type": "integer", "minimum": 0, "description": "drives (decimal sizes), memory modules, raid arrays" },
         "memoryBytes": { "type": "integer", "minimum": 0, "description": "system: RAM soldered on an SBC" },
-        "interface": { "type": "string", "maxLength": 20, "description": "drives: nvme, sata, usb, sd, emmc, …" },
+        "vramBytes": { "type": "integer", "minimum": 0, "description": "gpu: dedicated VRAM in bytes" },
+        "interface": { "type": "string", "maxLength": 20, "description": "drives: nvme, sata, usb, sd, emmc, virtio, …" },
         "slot": { "type": "string", "maxLength": 120, "description": "ata1, nvme0, mmc0, DIMM_A1, usb 1-2, …" },
         "memoryType": { "type": "string", "maxLength": 20 },
         "speedMTs": { "type": "integer", "minimum": 0 },
         "formFactor": { "type": "string", "maxLength": 20 },
-        "bus": { "type": "string", "maxLength": 20, "description": "nic and usb: pci, usb, platform, …" },
-        "onboard": { "type": "boolean", "description": "nic: built into the board" },
+        "bus": { "type": "string", "maxLength": 20, "description": "nic, gpu and usb: pci, usb, platform, …" },
+        "onboard": { "type": "boolean", "description": "nic/gpu: built into the board" },
         "removable": { "type": "boolean" },
+        "smartStatus": { "enum": ["PASSED", "FAILED", "UNKNOWN"] },
+        "tempC": { "type": "integer", "minimum": 0 },
+        "wearPercent": { "type": "integer", "minimum": 0 },
+        "mountSummary": { "type": "string", "maxLength": 120 },
         "raw": {
           "type": "object",
           "description": "source fields for troubleshooting only; never matched on",

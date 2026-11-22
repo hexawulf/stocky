@@ -19,6 +19,17 @@ const router = createRouter({
       component: AppShell,
       children: [
         { path: '', name: 'home', component: HomeView },
+        { path: 'fleet', name: 'fleet', component: () => import('@/views/FleetView.vue') },
+        {
+          path: 'fleet/drift',
+          name: 'fleet-drift',
+          component: () => import('@/views/DriftInboxView.vue'),
+        },
+        {
+          path: 'fleet/:id',
+          name: 'host-detail',
+          component: () => import('@/views/HostDetailView.vue'),
+        },
         { path: 'parts', name: 'parts', component: () => import('@/views/PartsView.vue') },
         {
           path: 'parts/new',

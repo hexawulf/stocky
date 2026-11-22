@@ -64,6 +64,8 @@ RUN addgroup -S -g 1000 stocky \
 
 COPY --from=pocketbase /dl/pocketbase /pb/pocketbase
 COPY --from=web /app/dist /pb/pb_public
+COPY tools/stocky-collect.sh /pb/pb_public/tools/stocky-collect.sh
+RUN cd /pb/pb_public/tools && sha256sum stocky-collect.sh > stocky-collect.sh.sha256 && chmod 0644 stocky-collect.sh stocky-collect.sh.sha256
 COPY pb_migrations /pb/pb_migrations
 COPY pb_hooks /pb/pb_hooks
 
