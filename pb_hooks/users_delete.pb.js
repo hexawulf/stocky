@@ -13,6 +13,8 @@ onRecordDelete((e) => {
     try {
       const uid = e.record.id
       for (const name of [
+        'pending_snapshots',
+        'ingest_tokens',
         'movements',
         'units',
         'imports',

@@ -1,14 +1,17 @@
 # Stocky
 
-**Know what's in your machines, and what's in stock.**
+**Auto-discover every machine in your fleet, visualize your entire hardware topology, and track every spare part and swap in one self-hosted container.**
 
-Stocky is a small, mobile-first, self-hosted inventory for homelab hardware:
+Stocky is a mobile-first, self-hosted homelab hardware tracker and spare parts ledger:
 spare parts at one or more sites, what's on its way between them (In transit),
-and what's installed in which machine. Every change is a dated movement,
-validated on the server, so quantities never go negative and the numbers can
-always be explained. You can undo the newest movement within 24 hours. One
-container: [PocketBase](https://pocketbase.io) (auth, SQLite, API rules,
-realtime) serving a Vue 3 app. No cloud services, no telemetry.
+what's installed in which machine, and a live visual representation of your entire
+hardware fleet (Rack Chassis Cards, Interactive Topology SVG, Host Hardware Anatomy
+Inspector, and Spec Matrix). Every stock change is a dated movement, validated on the
+server in one transaction, and the most recent movement or discovery import can be
+undone within 24 hours.
+
+One container: [PocketBase](https://pocketbase.io) (auth, SQLite, API rules,
+realtime SSE) serving a Vue 3 app. No cloud services, no telemetry.
 
 Source, issues and docs: **[github.com/hexawulf/stocky](https://github.com/hexawulf/stocky)**
 
@@ -33,7 +36,10 @@ secret.** Anyone who opens it can create the admin account. Create the
 superuser right after the first start, as shown above.
 
 Then open `http://<host>:8080/_/` (the dashboard), create your user account
-(there is no public sign-up), and sign in at `http://<host>:8080/`.
+(there is no public sign-up), and sign in at `http://<host>:8080/`. On a new
+instance, click **Load Demo Fleet** on `/fleet` to explore a 4-node visual
+homelab showcase right away, or click **＋ Connect Host** to generate an
+ingest token and discover your real machines.
 
 ## Docker Compose
 
@@ -60,7 +66,7 @@ docker exec -it stocky /pb/pocketbase superuser upsert you@example.com 'a-long-p
 
 | Tag      | Meaning                                         |
 | -------- | ----------------------------------------------- |
-| `X.Y.Z`  | one exact release, e.g. `0.1.1`                 |
+| `X.Y.Z`  | one exact release, e.g. `1.0.0`                 |
 | `X.Y`    | the newest patch release of that minor line     |
 | `latest` | the newest release (pre-releases never move it) |
 
@@ -68,7 +74,7 @@ docker exec -it stocky /pb/pocketbase superuser upsert you@example.com 'a-long-p
   multi-arch manifest.
 - Images are built and pushed by
   [GitHub Actions](https://github.com/hexawulf/stocky/actions/workflows/release.yml)
-  from GPG-signed git tags, only after the full test suite passes on that tag.
+  from GPG-signed git tags, only after the full test suite and Trivy security gate pass.
 - Each image carries **SBOM** and **SLSA provenance** attestations:
   `docker buildx imagetools inspect 0xwulf/stocky:latest --format '{{ json .Provenance }}'`
   (or `.SBOM`).
@@ -79,7 +85,7 @@ docker exec -it stocky /pb/pocketbase superuser upsert you@example.com 'a-long-p
 
 | Item        | Value                                                                  |
 | ----------- | ---------------------------------------------------------------------- |
-| Port        | `8080` (app, API `/api/`, dashboard `/_/`)                             |
+| Port        | `8080` (app, API `/api/`, collector `/tools/stocky-collect.sh`, `/_/`) |
 | Volume      | `/pb/pb_data`: SQLite database and settings. All state lives here.     |
 | User        | non-root `stocky`, uid/gid `1000`                                      |
 | Healthcheck | `GET /api/health` every 30 s                                           |
@@ -98,19 +104,29 @@ appear only after a reload. A full nginx example, trusting `X-Forwarded-For`,
 mail (SMTP for password reset) and backups are in
 [docs/deploy.md](https://github.com/hexawulf/stocky/blob/main/docs/deploy.md#behind-a-reverse-proxy).
 
-## Hardware discovery
+## Automated Hardware Discovery & Visual Topology
 
 [`tools/stocky-collect.sh`](https://github.com/hexawulf/stocky/blob/main/tools/README.md)
-reads a physical Linux machine (drives, memory, CPU, NICs, USB devices, Pi
-HATs, serial numbers) into a JSON snapshot. It's read-only, plain Bash and
-needs no extra packages. Upload the snapshot in Stocky (Import), review the
-preview (new, missing, replaced, moved, conflicting) and apply only what you
-confirm. Re-runs never double count; an import can be undone as a whole.
-Format: [docs/discovery-schema.json](https://github.com/hexawulf/stocky/blob/main/docs/discovery-schema.json).
+(also served directly from your container at `/tools/stocky-collect.sh` alongside
+`/tools/stocky-collect.sh.sha256`) reads bare-metal Linux machines, Raspberry Pi
+SBCs, Cloud KVM VPSes, Synology DSM NASes, and WSL2 instances into a
+`stocky.discovery/2` JSON snapshot.
+
+- **Automated Push (`--push`):** Authenticates with a scoped `stky_...` token
+  (stored as a SHA-256 hash in PocketBase). Live telemetry (`lastSeenAt`, OS/kernel,
+  CPU/RAM/storage summaries, SMART temperatures) updates automatically, while
+  physical hardware changes queue in the **Drift Inbox (`/fleet/drift`)** for 1-click
+  transactional review and 24-hour undo.
+- **Central SSH Pull (`tools/stocky-fleet-pull.sh`):** Streams the collector
+  read-only over SSH for NASes or isolated hosts and pushes each snapshot to Stocky.
+- **Shareable Visual Exports:** Export your fleet topology as standalone **SVG**,
+  **2× PNG**, **Markdown Spec Matrix**, or **JSON** with **Privacy Redaction ON by
+  default** (strips serial numbers, MAC addresses, `machineIdHash`, and costs).
 
 ## Links
 
 - GitHub: https://github.com/hexawulf/stocky
+- Security policy: https://github.com/hexawulf/stocky/blob/main/SECURITY.md
 - Specification: https://github.com/hexawulf/stocky/blob/main/spec.md
 - Deployment guide: https://github.com/hexawulf/stocky/blob/main/docs/deploy.md
 - Seed presets: https://github.com/hexawulf/stocky/blob/main/docs/presets.md

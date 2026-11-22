@@ -667,21 +667,191 @@ function seed(app, uid) {
     siteIds[l.key] = record.id
   })
   SEED.hosts.forEach((h, i) => {
-    create('hosts', {
+    const fields = {
       key: h.key,
       label: h.label,
       type: h.type,
       site: siteIds[h.site],
       sortOrder: i,
-    })
+    }
+    for (const extra of [
+      'formFactor',
+      'virtualType',
+      'role',
+      'provider',
+      'monthlyCost',
+      'currency',
+      'tdpWatts',
+      'machineIdHash',
+      'lastCollector',
+      'specs',
+      'smartSummary',
+    ]) {
+      if (h[extra] !== undefined) fields[extra] = h[extra]
+    }
+    if (h.specs) fields.lastSeenAt = new Date().toISOString()
+    create('hosts', fields)
   })
+  const catIds = {}
   SEED.categories.forEach((c, i) => {
-    create('categories', Object.assign({ sortOrder: i }, c))
+    const rec = create('categories', Object.assign({ sortOrder: i }, c))
+    catIds[c.key] = rec.id
   })
+
+  if (presetName === 'demo_fleet') {
+    seedDemoFleetInventory(app, uid, siteIds, catIds)
+  }
 
   user.set('seedVersion', 1)
   app.save(user)
   return { seeded: true, preset: presetName }
+}
+
+function seedDemoFleetInventory(app, uid, siteIds, catIds) {
+  const hostsByKey = {}
+  for (const h of app.findRecordsByFilter('hosts', 'user = {:uid}', '', 0, 0, { uid: uid })) {
+    if (h.getString('key')) hostsByKey[h.getString('key')] = h
+  }
+  const today = utcDate(0)
+  const items = [
+    {
+      name: 'Samsung SSD 990 PRO 1TB NVMe',
+      category: catIds.storage,
+      manufacturer: 'Samsung',
+      model: 'Samsung SSD 990 PRO 1TB',
+      spareSite: siteIds.lab_rack,
+      spareQty: 1,
+      priceMinor: 9900,
+      host: hostsByKey.sbc_node_01,
+      serials: ['S6Z1NJ0X00101'],
+      kind: 'drive',
+      slot: 'nvme0',
+    },
+    {
+      name: 'WD Black SN850X 2TB NVMe',
+      category: catIds.storage,
+      manufacturer: 'WD',
+      model: 'WD Black SN850X 2TB',
+      spareSite: siteIds.office_desk,
+      spareQty: 1,
+      priceMinor: 14900,
+      host: hostsByKey.ws_compute_01,
+      serials: ['WDBLK2001', 'WDBLK2002'],
+      kind: 'drive',
+      slot: 'nvme0',
+    },
+    {
+      name: 'Seagate IronWolf 8TB NAS HDD',
+      category: catIds.storage,
+      manufacturer: 'Seagate',
+      model: 'IronWolf 8TB ST8000VN004',
+      spareSite: siteIds.lab_rack,
+      spareQty: 1,
+      priceMinor: 19500,
+      host: hostsByKey.nas_vault_01,
+      serials: ['WSD90011', 'WSD90012', 'WSD90013', 'WSD90014'],
+      kind: 'drive',
+      slot: 'ata1',
+    },
+    {
+      name: '32 GB DDR5-5600 DIMM',
+      category: catIds.components,
+      manufacturer: 'Kingston',
+      model: 'KF556C40-32',
+      spareSite: siteIds.office_desk,
+      spareQty: 2,
+      priceMinor: 10500,
+      host: hostsByKey.ws_compute_01,
+      serials: ['K5320001', 'K5320002'],
+      kind: 'memory',
+      slot: 'DIMM_A2',
+    },
+    {
+      name: 'NVIDIA GeForce RTX 4070 Ti SUPER',
+      category: catIds.components,
+      manufacturer: 'NVIDIA',
+      model: 'NVIDIA GeForce RTX 4070 Ti SUPER',
+      spareSite: '',
+      spareQty: 0,
+      priceMinor: 79900,
+      host: hostsByKey.ws_compute_01,
+      serials: ['GPU-9a8b7c6d-1122-3344-5566-778899aabbcc'],
+      kind: 'gpu',
+      slot: '0000:01:00.0',
+    },
+  ]
+
+  for (const it of items) {
+    let part = null
+    if (it.spareQty > 0 && it.spareSite) {
+      const r = recordMovement(
+        app,
+        uid,
+        {
+          type: 'stock_in',
+          quantity: it.spareQty,
+          toLocation: it.spareSite,
+          priceMinor: it.priceMinor,
+          priceCurrency: 'USD',
+          date: today,
+          note: 'Demo fleet spare stock',
+          newPart: {
+            name: it.name,
+            category: it.category,
+            unit: 'pcs',
+            manufacturer: it.manufacturer,
+            model: it.model,
+            lowStockEnabled: true,
+            lowStockThreshold: 1,
+          },
+        },
+        {},
+      )
+      part = r.part
+    }
+    if (it.host && it.serials.length) {
+      const r = recordMovement(
+        app,
+        uid,
+        Object.assign(
+          {
+            type: 'found_installed',
+            quantity: it.serials.length,
+            toHost: it.host.id,
+            date: today,
+            note: `Discovery: ${it.host.getString('label')} ${today}`,
+          },
+          part
+            ? { part: part.id }
+            : {
+                newPart: {
+                  name: it.name,
+                  category: it.category,
+                  unit: 'pcs',
+                  manufacturer: it.manufacturer,
+                  model: it.model,
+                },
+              },
+        ),
+        {},
+      )
+      part = r.part
+      it.serials.forEach((ser, idx) => {
+        const u = new Record(app.findCollectionByNameOrId('units'))
+        u.set('user', uid)
+        u.set('part', part.id)
+        u.set('serial', ser)
+        u.set('serialKey', serialKey(ser))
+        u.set('kind', it.kind)
+        u.set('slot', idx === 0 ? it.slot : `${it.slot.replace(/\d+$/, '')}${idx}`)
+        u.set('host', it.host.id)
+        u.set('status', 'installed')
+        u.set('firstSeen', today)
+        u.set('lastSeen', today)
+        app.save(u)
+      })
+    }
+  }
 }
 
 // --- reference-list guards (spec §4.10, §6.5) ------------------------------------------------
@@ -777,6 +947,7 @@ function becameRetired(record) {
 }
 
 module.exports = {
+  findOwned,
   TYPES,
   fail,
   respond,

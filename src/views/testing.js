@@ -164,6 +164,9 @@ const stub = { template: '<div />' }
 export async function mountAt(component, path, { routeName } = {}) {
   const names = {
     home: '/',
+    fleet: '/fleet',
+    'fleet-drift': '/fleet/drift',
+    'host-detail': '/fleet/:id',
     parts: '/parts',
     'part-new': '/parts/new',
     'part-edit': '/parts/:id/edit',

@@ -5,6 +5,41 @@ All notable changes to Stocky. The format follows
 [Semantic Versioning](https://semver.org/). Docker images are published as
 `0xwulf/stocky:<version>`, `:<major>.<minor>` and `:latest`.
 
+## [1.0.0] - 2026-11-22
+
+### Added
+
+- **Visual Fleet Hardware Experience (`/fleet`):**
+  - **KPI Summary Strip:** Live host freshness (`online`, `stale`, `drift`), aggregate compute cores (`ARM64` vs `x86_64`, physical vs cloud vCPUs), total fleet RAM, total storage capacity with SMART health warnings, and optional monthly cloud spend + physical TDP power totals.
+  - **Rack & Chassis View:** Hardware chassis cards grouped by Site with form-factor badges (`SBC`, `Workstation`, `Server`, `NAS`, `Cloud VPS`, `VM`), CPU/RAM/OS spec chips, visual drive-bay slots (`NVMe`, `SATA`, `VirtIO`, `SD`, `USB`) with SMART status LEDs and temperatures, and GPU/HAT/NIC chips.
+  - **Interactive Fleet Topology SVG (`FleetTopologyMap.vue`):** Pure Vue-rendered hierarchical SVG topology map (Fleet Root → Site Containers → Host Nodes → expandable Tier-3 Hardware Anatomy sub-nodes) with zoom, fit, and detailed/compact modes.
+  - **Comparison Matrix (`FleetMatrixView.vue`):** Sortable fleet spec matrix across Site, Form Factor, Arch/OS, CPU/Cores, RAM, Storage, GPUs, NICs, SMART, Cost, and Last Seen.
+- **Host Detail Inspector (`/fleet/:id`):**
+  - Visual Hardware Anatomy SVG block diagram (System Board/SoC, Compute, Memory Subsystem, PCIe/GPU/NICs, Storage Bays).
+  - Installed Stocky parts & serialized `units` with 1-click **Swap with spare** and **Uninstall to spare** actions, Hardware Timeline, and Quick Metadata Editor.
+- **Universal Discovery Schema v2 & Collector (`tools/stocky-collect.sh` v2.0.0):**
+  - Extended `docs/discovery-schema.json` to `stocky.discovery/2` (full backward compatibility with `stocky.discovery/1`).
+  - Collects bare-metal Linux, Raspberry Pi / ARM64 SBCs, Cloud KVM VPSes, Synology DSM NASes, and WSL2 hosts (`--physical-only` restores v1 VM refusal).
+  - Added GPU detection (`nvidia-smi` and `lspci`), OS/kernel/uptime telemetry, CPU/memory/storage summaries, and non-destructive `smartctl` health, temperature, and wear summaries.
+  - Added `--push <URL>` with `--token-file <PATH>` (or `STOCKY_TOKEN` env var; raw CLI tokens refused so `ps` never leaks secrets), plus `--print-systemd` and `--print-cron` snippet generators.
+  - Added `tools/stocky-fleet-pull.sh` + `tools/hosts.conf.example` for central read-only SSH collection of NASes and isolated nodes.
+  - Baked `/tools/stocky-collect.sh` and `/tools/stocky-collect.sh.sha256` directly into the container's static file server.
+- **Scoped Ingest Tokens & Zero-Noise Drift Inbox (`/fleet/drift`):**
+  - Migration `1791072011_fleet_hardware.js`: enriched `hosts` collection and created `ingest_tokens` (SHA-256 hashed, constant-time verified, scoped to host/site/fleet, revocable) and `pending_snapshots` (with automatic 10-snapshot clean retention per host).
+  - `POST /api/stocky/ingest` updates live host telemetry (`specs`, `smartSummary`, `lastSeenAt`, `formFactor`) automatically and queues physical hardware drift in `pending_snapshots` (`status = "drift_pending"`).
+  - `POST /api/stocky/drift/{id}/apply` and `/dismiss` let operators confirm or dismiss hardware drift in one click with full 24-hour undo support.
+- **Privacy-Safe Visual & Spec Exports (`FleetExportDialog.vue`):**
+  - Export fleet topology and specs as standalone **SVG**, **2× High-DPI PNG** (client-side Canvas), **Markdown Spec Matrix**, or **JSON Inventory**.
+  - Privacy redaction toggles ON by default (strips serial numbers, MAC addresses, `machineIdHash`, costs, plus optional host anonymization).
+- **Onboarding & Tier-S Engineering:**
+  - Added `demo_fleet` preset and 1-click **Load Demo Fleet** action (`POST /api/stocky/demo-fleet`), plus the **Connect a Host** wizard (`ConnectHostDialog.vue`).
+  - Added Playwright Chromium E2E smoke suite (`e2e/smoke.spec.mjs`, `scripts/test-e2e.sh`), `.github/dependabot.yml`, and `SECURITY.md`.
+  - Standardized About dialog Developer attribution (`Erling Wulf Weinreich (0xWulf) · dev@0xwulf.dev`) and `What's new in 1.0.0` summary.
+
+### Security
+
+- Upgraded dev dependencies (`vite` 8.3.8, `vitest` 5.1.1, `happy-dom` 21.0.4) and overrides (`glob` 14.0.6, `minimatch` 11.0.9, `source-map-js` 1.2.4) so `npm audit` and `npm audit --omit=dev` report 0 vulnerabilities.
+
 ## [0.1.3] - 2026-11-16
 
 ### Security
@@ -68,6 +103,7 @@ Initial public release.
 - One multi-arch Docker image (amd64/arm64): PocketBase serving the Vue app,
   Alpine, non-root.
 
+[1.0.0]: https://github.com/hexawulf/stocky/compare/v0.1.3...v1.0.0
 [0.1.3]: https://github.com/hexawulf/stocky/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/hexawulf/stocky/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/hexawulf/stocky/compare/v0.1.0...v0.1.1

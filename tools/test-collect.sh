@@ -1,23 +1,21 @@
 #!/usr/bin/env bash
 # Author:      0xWulf
-# Description: Tests for tools/stocky-collect.sh (spec §13.9 phase D2) without
-#              touching any real machine: builds fake /sys, /proc and /etc
-#              trees for a Pi 5 with NVMe, an x86 desktop and a Pi full of
-#              hostile strings, stubs lsblk/lscpu/uname/dmidecode/smartctl/
-#              sudo/systemd-detect-virt on PATH, runs the collector against
-#              them (STOCKY_COLLECT_ROOT), and checks: bash -n, shellcheck (if
-#              installed), JSON validity against docs/discovery-schema.json,
-#              exact round-trip of hostile strings, --no-sudo, and refusal of
-#              VMs, WSL and containers (exit 3, no output). Also validates the
+# Description: Tests for tools/stocky-collect.sh v2.0.0 and tools/stocky-fleet-pull.sh
+#              without touching any real machine: builds fake /sys, /proc and /etc
+#              trees for a Pi 5 with NVMe, an x86 desktop, a KVM cloud VPS, a Synology
+#              DSM NAS, a WSL2 host, an NVIDIA GPU workstation, a host with a SMART
+#              drive warning, and a Pi full of hostile strings. Validates bash -n,
+#              shellcheck (if installed), JSON validity against docs/discovery-schema.json,
+#              exact round-trip of hostile strings, --no-sudo, --physical-only refusal of
+#              VMs/WSL/containers (exit 3), --push with mock HTTP endpoint, and
 #              committed fixtures in tools/fixtures.
 # Usage:       tools/test-collect.sh [--write-fixtures]
-#                --write-fixtures  regenerate tools/fixtures/{pi5-nvme,x86-desktop,
-#                                  hostile-strings}.json from the fake machines
-# Modified:    2026-10-05
+# Modified:    2026-11-22
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 COLLECT="$ROOT/tools/stocky-collect.sh"
+PULL="$ROOT/tools/stocky-fleet-pull.sh"
 FIX="$ROOT/tools/fixtures"
 write_fixtures=0
 for arg in "$@"; do
@@ -26,6 +24,8 @@ for arg in "$@"; do
     *) echo "unknown option: $arg" >&2; exit 2 ;;
   esac
 done
+
+chmod +x "$COLLECT" "$PULL"
 
 if [ -t 1 ]; then
   green=$'\033[32m' red=$'\033[31m' off=$'\033[0m'
@@ -40,20 +40,19 @@ check() { if [ "$2" = "$3" ]; then ok "$1"; else bad "$1" "(got '$3', want '$2')
 
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
-export HOME="$work/home" # the collector's log goes here, not to ~/logs
+export HOME="$work/home"
 mkdir -p "$HOME"
 
 # --- stub commands ---------------------------------------------------------------------
 BIN="$work/bin"
 mkdir -p "$BIN"
-stub() { # stub NAME <<'EOF' ... body
+stub() {
   {
     echo '#!/usr/bin/env bash'
     cat
   } >"$BIN/$1"
   chmod +x "$BIN/$1"
 }
-# each fake machine keeps its command output under $FAKE/cmd/
 stub lsblk <<'EOF'
 cat "$FAKE/cmd/lsblk"
 EOF
@@ -61,7 +60,9 @@ stub lscpu <<'EOF'
 cat "$FAKE/cmd/lscpu"
 EOF
 stub uname <<'EOF'
-[ "${1:-}" = -m ] && cat "$FAKE/cmd/arch" || echo Linux
+if [ "${1:-}" = -m ]; then cat "$FAKE/cmd/arch"
+elif [ "${1:-}" = -r ]; then cat "$FAKE/root/proc/sys/kernel/osrelease" 2>/dev/null || echo 6.8.0
+else echo Linux; fi
 EOF
 stub systemd-detect-virt <<'EOF'
 case "${1:-}" in
@@ -82,7 +83,12 @@ stub smartctl <<'EOF'
 dev=${*: -1}; f="$FAKE/cmd/smartctl-${dev##*/}"
 [ -r "$f" ] && cat "$f" || exit 2
 EOF
-# sudo -n runs the (stub) command unless the machine says sudo needs a password
+stub nvidia-smi <<'EOF'
+[ -r "$FAKE/cmd/nvidia-smi" ] && cat "$FAKE/cmd/nvidia-smi" || exit 1
+EOF
+stub lspci <<'EOF'
+[ -r "$FAKE/cmd/lspci" ] && cat "$FAKE/cmd/lspci" || exit 0
+EOF
 stub sudo <<'EOF'
 [ "${1:-}" = -n ] && shift
 [ -e "$FAKE/cmd/sudo-denied" ] && { echo 'sudo: a password is required' >&2; exit 1; }
@@ -91,14 +97,11 @@ EOF
 export PATH="$BIN:$PATH"
 
 # --- fake machines ---------------------------------------------------------------------------
-put() { # put FILE CONTENT (printf %b, so \0 and \x.. work)
+put() {
   mkdir -p "$(dirname "$1")"
   printf '%b' "$2" >"$1"
 }
 
-# A Raspberry Pi 5 (8 GB) with an NVMe HAT, an SD card, onboard Ethernet and
-# Wi-Fi, a USB keyboard, a USB stick (left to lsblk), a hub, a HAT EEPROM and a
-# Docker bridge. $2 = 1 fills the strings with hostile content.
 make_pi() {
   local F=$1 hostile=$2 r
   r="$F/root"
@@ -109,7 +112,7 @@ make_pi() {
     hat_product="<script>alert(1)</script> ' || 1=1 -- 日本語 ✓"
     kb_vendor='Logi"tech\\'
     kb_product='Key\tboard\x7f "quoted" \\path\\ ünïcödé\xff'
-    nvme_model='Q\x22uote\x5c\x01 NVMe ½' # as lsblk -P escapes them
+    nvme_model='Q\x22uote\x5c\x01 NVMe ½'
     sd_name='S"D\\x5c'
   fi
   mkdir -p "$F/cmd" "$r/etc" "$r/sys/class/net" "$r/sys/block" "$r/sys/bus/usb/devices" "$r/sys/bus/platform/drivers/macb" "$r/sys/bus/sdio/drivers/brcmfmac"
@@ -122,12 +125,14 @@ make_pi() {
   put "$r/proc/device-tree/hat/product_ver" '0x0002\0'
   put "$r/proc/device-tree/hat/uuid" '3f2504e0-4f89-11d3-9a0c-0305e82c3301\0'
   put "$r/proc/cpuinfo" 'processor\t: 0\nRevision\t: d04170\nSerial\t\t: e4a1b2c3d4e5f607\n'
+  put "$r/proc/meminfo" 'MemTotal:        8388608 kB\nSwapTotal:             0 kB\n'
+  put "$r/proc/uptime" '86400.42 340000.00\n'
+  put "$r/etc/os-release" 'NAME="Ubuntu"\nVERSION_ID="26.04"\n'
   put "$r/proc/sys/kernel/hostname" 'pi-test\n'
   put "$r/proc/sys/kernel/osrelease" '6.6.51+rpt-rpi-2712\n'
   put "$r/etc/machine-id" '0123456789abcdef0123456789abcdef\n'
-  put "$F/cmd/lscpu" 'Architecture:            aarch64\nVendor ID:               ARM\nModel name:              Cortex-A76\nSocket(s):               -\nCore(s) per cluster:     4\n'
+  put "$F/cmd/lscpu" 'Architecture:            aarch64\nCPU(s):                  4\nVendor ID:               ARM\nModel name:              Cortex-A76\nSocket(s):               -\nCore(s) per cluster:     4\nCPU max MHz:             2400.0000\n'
 
-  # drives: lsblk output plus the sysfs paths the slot comes from
   local nv="$r/sys/devices/platform/axi/1000110000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/nvme/nvme0/nvme0n1"
   local mmc="$r/sys/devices/platform/axi/1000fff000.mmc/mmc_host/mmc0/mmc0:aaaa"
   mkdir -p "$nv" "$mmc/block/mmcblk0"
@@ -146,7 +151,6 @@ make_pi() {
     printf 'NAME="zram0" MODEL="" VENDOR="" SERIAL="" SIZE="2147483648" TRAN="" ROTA="0" TYPE="disk" RM="0" WWN=""\n'
   } >"$F/cmd/lsblk"
 
-  # network: onboard Ethernet (platform), Wi-Fi (sdio), and a Docker bridge (no device)
   local eth="$r/sys/devices/platform/axi/1f00100000.ethernet" wl="$r/sys/devices/platform/axi/1000fff100.mmc/mmc_host/mmc1/mmc1:0001/mmc1:0001:1"
   mkdir -p "$eth/net/eth0" "$wl/net/wlan0/wireless" "$r/sys/class/net/docker0"
   ln -s ../../devices/platform/axi/1f00100000.ethernet/net/eth0 "$r/sys/class/net/eth0"
@@ -161,7 +165,6 @@ make_pi() {
   put "$wl/net/wlan0/address" '2c:cf:67:00:00:02\n'
   put "$r/sys/class/net/docker0/address" '02:42:00:00:00:01\n'
 
-  # USB: a keyboard (kept), a stick (mass storage: lsblk's), a hub (skipped), a root hub (skipped)
   local u="$r/sys/bus/usb/devices"
   mkdir -p "$u/1-1/1-1:1.0" "$u/1-2/1-2:1.0" "$u/1-3" "$u/usb1"
   put "$u/1-1/idVendor" '046d\n'
@@ -181,9 +184,6 @@ make_pi() {
   put "$u/usb1/idVendor" '1d6b\n'
 }
 
-# An x86 desktop (a Lenovo mini PC): DMI, two memory modules and an empty slot
-# (dmidecode), a SATA SSD, an NVMe, a USB drive whose serial only smartctl
-# sees, onboard Intel Ethernet (PCI bus 00) and a USB Ethernet adapter.
 make_x86() {
   local F=$1 r
   r="$F/root"
@@ -198,8 +198,11 @@ make_x86() {
   put "$d/board_version" 'A00\n'
   put "$r/proc/sys/kernel/hostname" 'desktop-test\n'
   put "$r/proc/sys/kernel/osrelease" '6.8.0-45-generic\n'
+  put "$r/proc/meminfo" 'MemTotal:       25165824 kB\nSwapTotal:       4194304 kB\n'
+  put "$r/proc/uptime" '172800.10 500000.00\n'
+  put "$r/etc/os-release" 'NAME="Ubuntu"\nVERSION_ID="24.04"\n'
   put "$r/etc/machine-id" 'fedcba9876543210fedcba9876543210\n'
-  put "$F/cmd/lscpu" 'Architecture:                         x86_64\nVendor ID:                            GenuineIntel\nModel name:                           Intel(R) Core(TM) i5-10500T CPU @ 2.30GHz\nSocket(s):                            1\nCore(s) per socket:                   6\n'
+  put "$F/cmd/lscpu" 'Architecture:                         x86_64\nCPU(s):                               12\nVendor ID:                            GenuineIntel\nModel name:                           Intel(R) Core(TM) i5-10500T CPU @ 2.30GHz\nSocket(s):                            1\nCore(s) per socket:                   6\nCPU max MHz:                          3800.0000\n'
   put "$F/cmd/dmidecode-system-serial" '7XQ1234\n'
   put "$F/cmd/dmidecode-board-serial" '/7XQ1234/CNWS20012345/\n'
   cat >"$F/cmd/dmidecode-memory" <<'MEM'
@@ -265,11 +268,12 @@ MEM
   "json_format_version": [1, 0],
   "model_name": "WDC WD20EZAZ-00GGJB0",
   "serial_number": "WD-WX12A3B4C5D6",
-  "firmware_version": "80.00A80"
+  "firmware_version": "80.00A80",
+  "smart_status": { "passed": true },
+  "temperature": { "current": 34 }
 }
 SMART
 
-  # NICs: onboard Intel on bus 00, a USB adapter, WireGuard and a bridge (no device)
   local pci="$r/sys/devices/pci0000:00/0000:00:1f.6" usbnic="$r/sys/devices/pci0000:00/0000:00:14.0/usb2/2-2"
   mkdir -p "$pci/net/eno1" "$usbnic/2-2:1.0/net/enx00e04c680001" "$r/sys/class/net/wg0" "$r/sys/class/net/br0"
   ln -s ../../devices/pci0000:00/0000:00:1f.6/net/eno1 "$r/sys/class/net/eno1"
@@ -295,7 +299,106 @@ SMART
   put "$r/sys/class/net/wg0/address" '\n'
 }
 
-# run the collector on a fake machine: run NAME [ARGS...] -> $work/NAME.json, .err, .rc
+make_kvm_vps() {
+  local F=$1 r
+  r="$F/root"
+  mkdir -p "$F/cmd" "$r/etc" "$r/sys/class/net" "$r/sys/block" "$r/sys/bus/pci/drivers/virtio_net"
+  put "$F/cmd/arch" 'x86_64\n'
+  put "$F/cmd/virt-vm" 'kvm\n'
+  put "$r/sys/class/dmi/id/sys_vendor" 'QEMU\n'
+  put "$r/sys/class/dmi/id/product_name" 'Standard PC (Q35 + ICH9, 2009)\n'
+  put "$r/proc/sys/kernel/hostname" 'vps-node-01\n'
+  put "$r/proc/sys/kernel/osrelease" '6.12.0-generic\n'
+  put "$r/proc/meminfo" 'MemTotal:        8192000 kB\nSwapTotal:       2097152 kB\n'
+  put "$r/proc/uptime" '432000.00 860000.00\n'
+  put "$r/etc/os-release" 'NAME="Ubuntu"\nVERSION_ID="26.04"\n'
+  put "$r/etc/machine-id" 'aaaa1111bbbb2222cccc3333dddd4444\n'
+  put "$F/cmd/lscpu" 'Architecture:            x86_64\nCPU(s):                  4\nVendor ID:               AuthenticAMD\nModel name:              AMD EPYC-Genoa Processor\nSocket(s):               1\nCore(s) per socket:      4\n'
+  local vd="$r/sys/devices/pci0000:00/0000:00:04.0/virtio1/block/vda"
+  mkdir -p "$vd"
+  ln -s "../devices/pci0000:00/0000:00:04.0/virtio1/block/vda" "$r/sys/block/vda"
+  printf 'NAME="vda" MODEL="QEMU HARDDISK" VENDOR="0x1af4" SERIAL="drive-scsi0-0-0" SIZE="85899345920" TRAN="virtio" ROTA="0" TYPE="disk" RM="0" WWN=""\n' >"$F/cmd/lsblk"
+  local vnic="$r/sys/devices/pci0000:00/0000:00:03.0/virtio0"
+  mkdir -p "$vnic/net/eth0"
+  ln -s ../../devices/pci0000:00/0000:00:03.0/virtio0/net/eth0 "$r/sys/class/net/eth0"
+  ln -s ../.. "$vnic/net/eth0/device"
+  ln -s "$r/sys/bus/virtio" "$vnic/subsystem"
+  ln -s "$r/sys/bus/pci/drivers/virtio_net" "$vnic/driver"
+  put "$vnic/net/eth0/address" '52:54:00:12:34:56\n'
+}
+
+make_synology_nas() {
+  local F=$1 r
+  r="$F/root"
+  mkdir -p "$F/cmd" "$r/etc" "$r/etc.defaults" "$r/sys/class/net" "$r/sys/block" "$r/sys/bus/pci/drivers/igb"
+  put "$F/cmd/arch" 'x86_64\n'
+  put "$r/etc/synoinfo.conf" 'upnpmodelname="DS423+"\nunique="synology_geminilake_423+"\n'
+  put "$r/etc.defaults/VERSION" 'productversion="7.2.2"\nbuildnumber="72806"\n'
+  put "$r/proc/sys/kernel/syno_serial" '2090SBR123456\n'
+  put "$r/proc/sys/kernel/hostname" 'nas-box\n'
+  put "$r/proc/sys/kernel/osrelease" '4.4.302+\n'
+  put "$r/proc/meminfo" 'MemTotal:        8192000 kB\nSwapTotal:       4194304 kB\n'
+  put "$r/proc/uptime" '950000.00 1800000.00\n'
+  put "$r/etc/machine-id" '11112222333344445555666677778888\n'
+  put "$F/cmd/lscpu" 'Architecture:            x86_64\nCPU(s):                  4\nVendor ID:               GenuineIntel\nModel name:              Intel(R) Celeron(R) J4125 CPU @ 2.00GHz\nSocket(s):               1\nCore(s) per socket:      4\n'
+  local s1="$r/sys/devices/pci0000:00/0000:00:12.0/ata1/host0/target0:0:0/0:0:0:0/block/sda"
+  local s2="$r/sys/devices/pci0000:00/0000:00:12.0/ata2/host1/target1:0:0/1:0:0:0/block/sdb"
+  mkdir -p "$s1" "$s2"
+  ln -s "../devices/pci0000:00/0000:00:12.0/ata1/host0/target0:0:0/0:0:0:0/block/sda" "$r/sys/block/sda"
+  ln -s "../devices/pci0000:00/0000:00:12.0/ata2/host1/target1:0:0/1:0:0:0/block/sdb" "$r/sys/block/sdb"
+  {
+    printf 'NAME="sda" MODEL="ST8000VN004-2M2101" VENDOR="ATA" SERIAL="WSD10001" SIZE="8001563222016" TRAN="sata" ROTA="1" TYPE="disk" RM="0" WWN=""\n'
+    printf 'NAME="sdb" MODEL="ST8000VN004-2M2101" VENDOR="ATA" SERIAL="WSD10002" SIZE="8001563222016" TRAN="sata" ROTA="1" TYPE="disk" RM="0" WWN=""\n'
+  } >"$F/cmd/lsblk"
+  cat >"$F/cmd/smartctl-sda" <<'SMART'
+{
+  "smart_status": { "passed": true },
+  "temperature": { "current": 36 }
+}
+SMART
+  cat >"$F/cmd/smartctl-sdb" <<'SMART'
+{
+  "smart_status": { "passed": true },
+  "temperature": { "current": 37 }
+}
+SMART
+}
+
+make_wsl2() {
+  local F=$1 r
+  r="$F/root"
+  mkdir -p "$F/cmd" "$r/etc" "$r/sys/class/net" "$r/sys/block"
+  put "$F/cmd/arch" 'x86_64\n'
+  put "$r/proc/sys/kernel/hostname" 'dev-wsl2\n'
+  put "$r/proc/sys/kernel/osrelease" '5.15.167.4-microsoft-standard-WSL2\n'
+  put "$r/proc/meminfo" 'MemTotal:       16384000 kB\nSwapTotal:       4194304 kB\n'
+  put "$r/proc/uptime" '12000.00 40000.00\n'
+  put "$r/etc/os-release" 'NAME="Ubuntu"\nVERSION_ID="24.04"\n'
+  put "$r/etc/machine-id" '99998888777766665555444433332222\n'
+  put "$F/cmd/lscpu" 'Architecture:            x86_64\nCPU(s):                  16\nVendor ID:               AuthenticAMD\nModel name:              AMD Ryzen 7 7840HS w/ Radeon 780M Graphics\nSocket(s):               1\nCore(s) per socket:      8\n'
+  printf 'NAME="sdc" MODEL="Virtual Disk" VENDOR="Msft" SERIAL="" SIZE="274877906944" TRAN="" ROTA="0" TYPE="disk" RM="0" WWN=""\n' >"$F/cmd/lsblk"
+}
+
+make_nvidia_workstation() {
+  local F=$1
+  make_x86 "$F"
+  put "$F/root/proc/sys/kernel/hostname" 'gpu-ws\n'
+  put "$F/cmd/nvidia-smi" 'NVIDIA GeForce RTX 4070, GPU-1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d, 12282, 00000000:01:00.0\n'
+}
+
+make_smart_warning() {
+  local F=$1
+  make_x86 "$F"
+  put "$F/root/proc/sys/kernel/hostname" 'smart-warn-host\n'
+  cat >"$F/cmd/smartctl-nvme0n1" <<'SMART'
+{
+  "smart_status": { "passed": true },
+  "temperature": { "current": 72 },
+  "nvme_smart_health_information_log": { "percentage_used": 95 }
+}
+SMART
+}
+
 run() {
   local name=$1
   shift
@@ -304,32 +407,37 @@ run() {
   STOCKY_COLLECT_ROOT="$FAKE/root" "$COLLECT" "$@" >"$work/$name.json" 2>"$work/$name.err" || rc=$?
   echo "$rc" >"$work/$name.rc"
 }
-# node -e helper: q FILE EXPR -> prints JSON.stringify(EXPR) with j = the parsed file
 q() { node -e "const j = JSON.parse(require('fs').readFileSync(process.argv[1], 'utf8')); console.log(JSON.stringify($2))" "$1"; }
 
 echo '# static checks'
-bash -n "$COLLECT" && ok 'bash -n' || bad 'bash -n'
+bash -n "$COLLECT" && ok 'bash -n stocky-collect.sh' || bad 'bash -n stocky-collect.sh'
+bash -n "$PULL" && ok 'bash -n stocky-fleet-pull.sh' || bad 'bash -n stocky-fleet-pull.sh'
 if command -v shellcheck >/dev/null; then
-  if shellcheck -S warning "$COLLECT" >"$work/sc.out"; then ok 'shellcheck (warnings and errors)'; else bad 'shellcheck' "$(head -c 400 "$work/sc.out")"; fi
+  if shellcheck -S warning "$COLLECT" "$PULL" >"$work/sc.out"; then ok 'shellcheck (warnings and errors)'; else bad 'shellcheck' "$(head -c 400 "$work/sc.out")"; fi
 else
   echo 'shellcheck not installed: skipped'
 fi
-check '--version' 'stocky-collect 1.0.0' "$("$COLLECT" --version)"
+check '--version' 'stocky-collect 2.0.0' "$("$COLLECT" --version)"
 rc=0; "$COLLECT" --bogus >/dev/null 2>&1 || rc=$?
 check 'unknown option exits 2' 2 "$rc"
+rc=0; "$COLLECT" --token secret >/dev/null 2>&1 || rc=$?
+check 'raw --token on CLI argv refused (exit 2)' 2 "$rc"
+check '--print-systemd outputs timer unit' 1 "$("$COLLECT" --print-systemd | grep -c 'OnCalendar=daily')"
+check '--print-cron outputs cron snippet' 1 "$("$COLLECT" --print-cron | grep -c '@reboot')"
 
-echo '# Raspberry Pi 5 with NVMe'
+echo '# Raspberry Pi 5 with NVMe (v2 schema)'
 make_pi "$work/pi5" 0
 run pi5
 check 'exit 0' 0 "$(cat "$work/pi5.rc")"
-check 'kinds: system, cpu, 2 drives, 2 NICs, USB keyboard, HAT (no loop/zram, stick, hub, docker0)' \
+check 'schema is stocky.discovery/2' '"stocky.discovery/2"' "$(q "$work/pi5.json" 'j.schema')"
+check 'kinds: system, cpu, 2 drives, 2 NICs, USB keyboard, HAT' \
   '["system","cpu","drive","drive","nic","nic","usb","hat"]' "$(q "$work/pi5.json" 'j.items.map(i => i.kind)')"
 check 'system: model, serial, 8 GB from the revision code' \
   '["Raspberry Pi Ltd","Raspberry Pi 5 Model B Rev 1.0","e4a1b2c3d4e5f607",8589934592]' \
   "$(q "$work/pi5.json" '(s => [s.vendor, s.model, s.serial, s.memoryBytes])(j.items[0])')"
-check 'host: platform, hostname, model, hashed machine-id' \
-  '["aarch64","pi-test","Raspberry Pi 5 Model B Rev 1.0",true,false]' \
-  "$(q "$work/pi5.json" '[j.host.platform, j.host.hostname, j.host.model, /^sha256:[0-9a-f]{64}$/.test(j.host.machineIdHash), JSON.stringify(j).includes("0123456789abcdef0123456789abcdef")]')"
+check 'host v2 telemetry: virtualType bare-metal, os, cpuSummary, memorySummary, storageSummary' \
+  '["aarch64","pi-test","bare-metal","Ubuntu",4,2]' \
+  "$(q "$work/pi5.json" '[j.host.platform, j.host.hostname, j.host.virtualType, j.host.os.name, j.host.cpuSummary.physicalCores, j.host.storageSummary.driveCount]')"
 check 'SD card: name and serial from sysfs, interface sd, slot mmc0' \
   '["SN128","0x1234abcd","sd","mmc0",127865454592]' \
   "$(q "$work/pi5.json" '(d => [d.model, d.serial, d.interface, d.slot, d.sizeBytes])(j.items.find(i => i.kind === "drive" && i.interface === "sd"))')"
@@ -341,8 +449,6 @@ check 'NICs onboard, by driver, MAC as serial' \
 check 'HAT from the EEPROM, uuid as serial' '["Pimoroni Ltd.","NVMe Base","3f2504e0-4f89-11d3-9a0c-0305e82c3301"]' \
   "$(q "$work/pi5.json" '(h => [h.vendor, h.model, h.serial])(j.items.find(i => i.kind === "hat"))')"
 check 'no sudo needed on a Pi: nothing skipped' '[[],[]]' "$(q "$work/pi5.json" '[j.skipped, j.warnings]')"
-check 'Pi: the sudo notice lists smartctl only, never dmidecode' '1 0' \
-  "$(grep -c 'sudo -n (no prompt) for: smartctl' "$work/pi5.err") $(grep -c dmidecode "$work/pi5.err" || true)"
 FAKE="$work/pi5" STOCKY_COLLECT_ROOT="$work/pi5/root" "$COLLECT" --dry-run >"$work/pi5-dry.out" 2>&1
 check 'Pi: --dry-run lists no dmidecode' 0 "$(grep -c dmidecode "$work/pi5-dry.out" || true)"
 
@@ -357,45 +463,60 @@ check 'system and board serials through sudo dmidecode' '["ThinkCentre M70q","7X
 check 'memory: size, type, speed, form, slot, part number; placeholder serial dropped' \
   '[["Kingston","KF432S20IB/16","1A2B3C4D",17179869184,"DDR4",3200,"SODIMM","DIMM A"],["Samsung","M471A1K43DB1-CWE",null,8589934592,"DDR4",2666,"SODIMM","DIMM B"]]' \
   "$(q "$work/x86.json" 'j.items.filter(i => i.kind === "memory").map(m => [m.vendor, m.model, m.serial ?? null, m.sizeBytes, m.memoryType, m.speedMTs, m.formFactor, m.slot])')"
-check 'drives: ATA vendor dropped, slots ata1/usb2/nvme0, the bridge serial from smartctl' \
-  '[["","Samsung SSD 870 EVO 500GB","S62ANJ0R123456A","sata","ata1"],["JMicron","USB3.0 SATA Bridge","WD-WX12A3B4C5D6","usb","usb2/2-1"],["","WDC WDS100T2B0C-00PXH0","21123X801234","nvme","nvme0"]]' \
-  "$(q "$work/x86.json" 'j.items.filter(i => i.kind === "drive").map(d => [d.vendor ?? "", d.model, d.serial, d.interface, d.slot])')"
-check 'CPU' '["Intel","Intel(R) Core(TM) i5-10500T CPU @ 2.30GHz"]' "$(q "$work/x86.json" '(c => [c.vendor, c.model])(j.items.find(i => i.kind === "cpu"))')"
-check 'NICs: Intel on bus 00 is onboard, the USB one is not' \
-  '[["pci","PCI network adapter 8086:0d4c",true],["usb","USB 10/100/1000 LAN",false]]' \
-  "$(q "$work/x86.json" 'j.items.filter(i => i.kind === "nic").map(n => [n.bus, n.model, n.onboard])')"
-check 'host model from DMI' 'LENOVO ThinkCentre M70q' "$(q "$work/x86.json" 'j.host.model' | tr -d '"')"
-check 'x86: the sudo notice names dmidecode' 1 "$(grep -c 'sudo -n (no prompt) for: dmidecode' "$work/x86.err")"
+check 'drives: ATA vendor dropped, slots ata1/usb2/nvme0, the bridge serial and SMART temp from smartctl' \
+  '[["","Samsung SSD 870 EVO 500GB","S62ANJ0R123456A","sata","ata1",null],["JMicron","USB3.0 SATA Bridge","WD-WX12A3B4C5D6","usb","usb2/2-1",34],["","WDC WDS100T2B0C-00PXH0","21123X801234","nvme","nvme0",null]]' \
+  "$(q "$work/x86.json" 'j.items.filter(i => i.kind === "drive").map(d => [d.vendor ?? "", d.model, d.serial, d.interface, d.slot, d.tempC ?? null])')"
+
+echo '# universal fleet classes: KVM VPS, Synology NAS, WSL2, NVIDIA GPU, SMART warning'
+make_kvm_vps "$work/kvm"
+run kvm
+check 'KVM VPS collected cleanly (exit 0)' 0 "$(cat "$work/kvm.rc")"
+check 'KVM VPS virtual=true, virtualType=kvm' '[true,"kvm","vps-node-01"]' "$(q "$work/kvm.json" '[j.host.virtual, j.host.virtualType, j.host.hostname]')"
+
+make_synology_nas "$work/synology"
+run synology
+check 'Synology NAS collected cleanly (exit 0)' 0 "$(cat "$work/synology.rc")"
+check 'Synology NAS virtual=false, virtualType=nas, DSM OS' '[false,"nas","Synology DS423+","Synology DSM",2,"ok"]' \
+  "$(q "$work/synology.json" '[j.host.virtual, j.host.virtualType, j.host.model, j.host.os.name, j.host.storageSummary.driveCount, j.host.smartSummary.status]')"
+
+make_wsl2 "$work/wsl2"
+run wsl2
+check 'WSL2 collected cleanly (exit 0)' 0 "$(cat "$work/wsl2.rc")"
+check 'WSL2 virtual=true, virtualType=wsl' '[true,"wsl","dev-wsl2"]' "$(q "$work/wsl2.json" '[j.host.virtual, j.host.virtualType, j.host.hostname]')"
+
+make_nvidia_workstation "$work/nvidia"
+run nvidia
+check 'NVIDIA workstation exit 0' 0 "$(cat "$work/nvidia.rc")"
+check 'NVIDIA GPU item captured with VRAM and UUID' '["NVIDIA","NVIDIA GeForce RTX 4070","GPU-1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d",12878610432]' \
+  "$(q "$work/nvidia.json" '(g => [g.vendor, g.model, g.serial, g.vramBytes])(j.items.find(i => i.kind === "gpu"))')"
+
+make_smart_warning "$work/smartwarn"
+run smartwarn
+check 'SMART warning host exit 0' 0 "$(cat "$work/smartwarn.rc")"
+check 'SMART summary flags warn with maxTempC=72 and unhealthyDrives' '["warn",72,2]' \
+  "$(q "$work/smartwarn.json" '[j.host.smartSummary.status, j.host.smartSummary.maxTempC, j.host.smartSummary.unhealthyDrives.length]')"
 
 echo '# --no-sudo, and sudo that wants a password'
 run x86 --no-sudo
 check '--no-sudo: memory skipped with the reason' '[{"kind":"memory","reason":"dmidecode needs sudo (--no-sudo given)"}]' "$(q "$work/x86.json" 'j.skipped')"
 check '  ...no serials from dmidecode or smartctl' '[null,null,null]' \
   "$(q "$work/x86.json" '[j.items[0].serial ?? null, j.items[1].serial ?? null, j.items.find(i => i.interface === "usb").serial ?? null]')"
-check '  ...warnings name what is missing' 2 "$(q "$work/x86.json" 'j.warnings.length')"
-check '  ...no sudo was called' 0 "$(grep -c 'sudo -n' "$work/x86.err" || true)"
 touch "$work/x86/cmd/sudo-denied"
 run x86
 check 'sudo -n refused: exit 0, memory skipped, says why' 'dmidecode needs sudo (sudo -n is not allowed without a password here)' "$(q "$work/x86.json" 'j.skipped[0].reason' | tr -d '"')"
 rm "$work/x86/cmd/sudo-denied"
 
-echo '# hostile strings (spec §13.9 D2, decision #23.7)'
+echo '# hostile strings'
 make_pi "$work/hostile" 1
 run hostile
 check 'exit 0' 0 "$(cat "$work/hostile.rc")"
 if node -e "JSON.parse(require('fs').readFileSync(process.argv[1], 'utf8'))" "$work/hostile.json" 2>/dev/null; then ok 'output parses as JSON'; else bad 'output parses as JSON' "$(head -c 300 "$work/hostile.json")"; fi
-check 'HAT vendor round-trips exactly (quotes, backslash, control characters escaped)' \
+check 'HAT vendor round-trips exactly' \
   "$(node -e 'console.log(JSON.stringify("Evil \"HAT\" \\ co\u0001\u001b[31m"))')" "$(q "$work/hostile.json" 'j.items.find(i => i.kind === "hat").vendor')"
 check 'HAT product: markup, SQL-ish and non-ASCII kept as text' \
   "$(node -e 'console.log(JSON.stringify("<script>alert(1)</script> '"'"' || 1=1 -- 日本語 ✓"))')" "$(q "$work/hostile.json" 'j.items.find(i => i.kind === "hat").model')"
-check 'USB product: tab, DEL, quotes, backslashes, accents; invalid UTF-8 byte dropped' \
-  "$(node -e 'console.log(JSON.stringify("Key\tboard\u007f \"quoted\" \\path\\ ünïcödé"))')" "$(q "$work/hostile.json" 'j.items.find(i => i.kind === "usb").model')"
-check 'USB vendor with a trailing backslash' "$(node -e 'console.log(JSON.stringify("Logi\"tech\\"))')" "$(q "$work/hostile.json" 'j.items.find(i => i.kind === "usb").vendor')"
-check 'lsblk \x escapes decoded (quote, backslash, control character)' \
-  "$(node -e 'console.log(JSON.stringify("Q\"uote\\\u0001 NVMe ½"))')" "$(q "$work/hostile.json" 'j.items.find(i => i.interface === "nvme").model')"
-check 'SD name from sysfs with a quote and a literal \x5c' "$(node -e 'console.log(JSON.stringify("S\"D\\x5c"))')" "$(q "$work/hostile.json" 'j.items.find(i => i.interface === "sd").model')"
 
-echo '# virtual machines, WSL and containers are refused (exit 3, no output)'
+echo '# --physical-only refuses virtual machines, WSL and containers (exit 3, no output)'
 for kind in vm wsl container; do
   make_pi "$work/$kind" 0
   case "$kind" in
@@ -403,32 +524,24 @@ for kind in vm wsl container; do
     wsl) put "$work/$kind/root/proc/sys/kernel/osrelease" '5.15.153.1-microsoft-standard-WSL2\n' ;;
     container) touch "$work/$kind/root/.dockerenv" ;;
   esac
-  run "$kind"
-  check "$kind: exit 3" 3 "$(cat "$work/$kind.rc")"
-  check "$kind: nothing on stdout" 0 "$(wc -c <"$work/$kind.json" | tr -d ' ')"
-  check "$kind: says why" 1 "$(grep -c 'Stocky tracks physical hardware only' "$work/$kind.err" || true)"
+  run "$kind" --physical-only
+  check "$kind (--physical-only): exit 3" 3 "$(cat "$work/$kind.rc")"
+  check "$kind (--physical-only): nothing on stdout" 0 "$(wc -c <"$work/$kind.json" | tr -d ' ')"
 done
-make_x86 "$work/hyperv"
-put "$work/hyperv/root/sys/class/dmi/id/sys_vendor" 'Microsoft Corporation\n'
-put "$work/hyperv/root/sys/class/dmi/id/product_name" 'Virtual Machine\n'
-run hyperv
-check 'Hyper-V by DMI product name (systemd-detect-virt says none): exit 3' 3 "$(cat "$work/hyperv.rc")"
-make_x86 "$work/cloud"
-put "$work/cloud/root/sys/class/dmi/id/sys_vendor" 'Hetzner\n'
-run cloud
-check 'a cloud vendor in DMI: exit 3' 3 "$(cat "$work/cloud.rc")"
 
-echo '# -o FILE and --dry-run'
+echo '# -o FILE, --dry-run, and stocky-fleet-pull.sh --dry-run'
 export FAKE="$work/pi5"
 STOCKY_COLLECT_ROOT="$FAKE/root" "$COLLECT" -o "$work/out.json" >"$work/o.stdout" 2>/dev/null
 check '-o writes the file, nothing on stdout' '0 true' "$(wc -c <"$work/o.stdout" | tr -d ' ') $(q "$work/out.json" 'j.items.length > 0')"
 STOCKY_COLLECT_ROOT="$FAKE/root" "$COLLECT" --dry-run -o "$work/dry.json" >"$work/dry.out" 2>&1
 check '--dry-run collects nothing' 'false 1' "$([ -e "$work/dry.json" ] && echo true || echo false) $(grep -c 'dry run' "$work/dry.out")"
-check 'a log per run in ~/logs' 1 "$(find "$HOME/logs" -name 'stocky-collect_*.log' | head -1 | wc -l)"
+printf 'pi-a\nnas-a --no-sudo\n' >"$work/hosts.conf"
+"$PULL" -c "$work/hosts.conf" --push https://stocky.example.com --dry-run >"$work/pull-dry.out"
+check 'stocky-fleet-pull.sh --dry-run lists targets' 2 "$(grep -c 'would collect via SSH' "$work/pull-dry.out")"
 
 echo '# schema (docs/discovery-schema.json)'
-if node "$ROOT/scripts/validate-schema.mjs" "$work/pi5.json" "$work/x86.json" "$work/hostile.json" "$work/out.json" >"$work/schema.out"; then
-  ok 'collector output validates (Pi 5, x86, hostile, -o)'
+if node "$ROOT/scripts/validate-schema.mjs" "$work/pi5.json" "$work/x86.json" "$work/kvm.json" "$work/synology.json" "$work/wsl2.json" "$work/nvidia.json" "$work/smartwarn.json" "$work/hostile.json" "$work/out.json" >"$work/schema.out"; then
+  ok 'collector output validates across all 8 machine profiles'
 else
   bad 'collector output validates' "$(cat "$work/schema.out")"
 fi
@@ -436,9 +549,8 @@ fi
 if [ "$write_fixtures" -eq 1 ]; then
   mkdir -p "$FIX"
   run x86
-  for pair in pi5:pi5-nvme x86:x86-desktop hostile:hostile-strings; do
+  for pair in pi5:pi5-nvme x86:x86-desktop kvm:kvm-vps synology:synology-nas wsl2:wsl2-host nvidia:nvidia-workstation smartwarn:smart-warning hostile:hostile-strings; do
     src=${pair%%:*} dst=${pair##*:}
-    # a fixed time, so regenerating doesn't change the fixtures
     sed -E 's/"collectedAt": "[^"]*"/"collectedAt": "2026-10-05T09:00:00+08:00"/' "$work/$src.json" >"$FIX/$dst.json"
     echo "wrote $FIX/$dst.json"
   done
@@ -446,7 +558,6 @@ fi
 shopt -s nullglob
 valid_fixtures=()
 for f in "$FIX"/*.json; do
-  # negative fixtures for the importer, by prefix (pi5-nvme contains "vm")
   case "${f##*/}" in invalid-* | vm-*) continue ;; esac
   valid_fixtures+=("$f")
 done

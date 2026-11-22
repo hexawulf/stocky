@@ -15,6 +15,7 @@ import {
   RELEASE_DATE,
   STACK,
   TAGLINE,
+  WHATS_NEW,
   diagnosticsLine,
 } from '@/lib/about.js'
 
@@ -124,6 +125,11 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
         Version {{ APP_VERSION }} · {{ RELEASE_DATE }}
       </p>
 
+      <h3>What's new in {{ APP_VERSION }}</h3>
+      <ul class="whats-new" data-test="about-whats-new">
+        <li v-for="(item, idx) in WHATS_NEW" :key="idx">{{ item }}</li>
+      </ul>
+
       <h3>Tech stack</h3>
       <dl class="stack">
         <template v-for="[label, value] in STACK" :key="label">
@@ -132,8 +138,8 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
         </template>
       </dl>
 
-      <h3>Contact</h3>
-      <p>
+      <h3>Developer</h3>
+      <p data-test="about-developer">
         {{ CONTACT.author }} ·
         <a :href="`mailto:${CONTACT.email}`" data-test="about-mail">{{ CONTACT.email }}</a>
       </p>
@@ -250,6 +256,15 @@ h3 {
 
 .stack dd {
   margin: 0;
+}
+
+.whats-new {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 0.88rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
 }
 
 .links {

@@ -6,6 +6,7 @@ import { formatQty } from './format.js'
 import { formatDay, parsePbDate } from './movements.js'
 import { todayLocal } from './dates.js'
 
+export const SCHEMAS = ['stocky.discovery/1', 'stocky.discovery/2']
 export const SCHEMA = 'stocky.discovery/1'
 export const MAX_SNAPSHOT_BYTES = 256 * 1024
 
@@ -26,10 +27,10 @@ export function checkSnapshotText(text) {
   if (!v || typeof v !== 'object' || Array.isArray(v)) {
     return { ok: false, message: "That file isn't a Stocky discovery snapshot" }
   }
-  if (v.schema !== SCHEMA) {
-    return { ok: false, message: `Unsupported snapshot format (expected ${SCHEMA})` }
+  if (!SCHEMAS.includes(v.schema)) {
+    return { ok: false, message: 'Unsupported snapshot format (expected stocky.discovery/1)' }
   }
-  if (v.host?.virtual === true) {
+  if (v.schema === 'stocky.discovery/1' && v.host?.virtual === true) {
     return {
       ok: false,
       message: 'This snapshot is from a virtual machine; Stocky tracks physical hardware only',

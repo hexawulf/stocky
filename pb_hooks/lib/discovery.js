@@ -6,18 +6,32 @@
 
 const s = require(`${__hooks}/lib/stocky.js`)
 
-const SCHEMA = 'stocky.discovery/1'
-const MAX_SNAPSHOT_CHARS = 256 * 1024
+const SCHEMAS = ['stocky.discovery/1', 'stocky.discovery/2']
+const MAX_SNAPSHOT_CHARS = 512 * 1024
 const MAX_ITEMS = 200
 const MAX_MATCH_KEYS = 50
-const KINDS = ['system', 'board', 'cpu', 'memory', 'drive', 'nic', 'usb', 'hat']
+const KINDS = ['system', 'board', 'cpu', 'memory', 'drive', 'nic', 'usb', 'hat', 'gpu', 'raid']
+const VIRTUAL_TYPES = [
+  'bare-metal',
+  'kvm',
+  'vmware',
+  'hyperv',
+  'wsl',
+  'lxc',
+  'xen',
+  'cloud',
+  'nas',
+  'unknown',
+]
 
 // preferred category keys per kind, across both presets (spec §13.5); then
 // `other`; then the user picks
 const CATEGORY_KEYS = {
   drive: ['storage'],
+  raid: ['storage'],
   memory: ['components'],
   cpu: ['components'],
+  gpu: ['components'],
   nic: ['networking'],
   usb: ['peripherals'],
   hat: ['computers', 'sbc'],
@@ -62,6 +76,11 @@ function raw(v) {
 }
 
 function cleanItem(v) {
+  const smartStatus =
+    typeof v.smartStatus === 'string' &&
+    ['PASSED', 'FAILED', 'UNKNOWN'].indexOf(v.smartStatus) >= 0
+      ? v.smartStatus
+      : null
   const item = {
     kind: v.kind,
     vendor: text(v.vendor, 80),
@@ -69,6 +88,7 @@ function cleanItem(v) {
     serial: text(v.serial, 80),
     sizeBytes: int(v.sizeBytes, Number.MAX_SAFE_INTEGER),
     memoryBytes: int(v.memoryBytes, Number.MAX_SAFE_INTEGER),
+    vramBytes: int(v.vramBytes, Number.MAX_SAFE_INTEGER),
     interface: text(v.interface, 20),
     slot: text(v.slot, 120),
     memoryType: text(v.memoryType, 20),
@@ -77,18 +97,84 @@ function cleanItem(v) {
     bus: text(v.bus, 20),
     onboard: bool(v.onboard),
     removable: bool(v.removable),
+    smartStatus: smartStatus,
+    tempC: int(v.tempC, 250),
+    wearPercent: int(v.wearPercent, 200),
+    mountSummary: text(v.mountSummary, 120),
     raw: raw(v.raw),
   }
   for (const k of Object.keys(item)) if (item[k] === null) delete item[k]
   return item
 }
 
-// The snapshot arrives as the file's text: parse it here, so anything that
-// isn't JSON is rejected before every other check. Returns the validated copy.
-function validateSnapshot(snapshotText) {
+function cleanOs(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return null
+  const out = {
+    name: text(v.name, 80) || '',
+    version: text(v.version, 80) || '',
+    kernel: text(v.kernel, 80) || '',
+  }
+  return out.name || out.version || out.kernel ? out : null
+}
+
+function cleanCpuSummary(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return null
+  const out = {
+    model: text(v.model, 120) || '',
+    physicalCores: int(v.physicalCores, 1024),
+    logicalCores: int(v.logicalCores, 2048),
+    maxMhz: int(v.maxMhz, 20000),
+  }
+  for (const k of Object.keys(out)) if (out[k] === null || out[k] === '') delete out[k]
+  return Object.keys(out).length ? out : null
+}
+
+function cleanMemorySummary(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return null
+  const out = {
+    totalBytes: int(v.totalBytes, Number.MAX_SAFE_INTEGER),
+    swapBytes: int(v.swapBytes, Number.MAX_SAFE_INTEGER),
+    zramBytes: int(v.zramBytes, Number.MAX_SAFE_INTEGER),
+  }
+  for (const k of Object.keys(out)) if (out[k] === null) delete out[k]
+  return Object.keys(out).length ? out : null
+}
+
+function cleanStorageSummary(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return null
+  const out = {
+    totalBytes: int(v.totalBytes, Number.MAX_SAFE_INTEGER),
+    driveCount: int(v.driveCount, 500),
+  }
+  for (const k of Object.keys(out)) if (out[k] === null) delete out[k]
+  return Object.keys(out).length ? out : null
+}
+
+function cleanSmartSummary(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return null
+  const status =
+    typeof v.status === 'string' && ['ok', 'warn', 'fail', 'unknown'].indexOf(v.status) >= 0
+      ? v.status
+      : 'unknown'
+  const maxTempC = int(v.maxTempC, 250)
+  const unhealthyDrives = Array.isArray(v.unhealthyDrives)
+    ? v.unhealthyDrives
+        .slice(0, 50)
+        .map((x) => text(x, 120))
+        .filter((x) => x)
+    : []
+  const out = { status: status, unhealthyDrives: unhealthyDrives }
+  if (maxTempC !== null) out.maxTempC = maxTempC
+  return out
+}
+
+// The snapshot arrives as the file's text (or object for internal ingest):
+// parse it here, so anything that isn't JSON is rejected before every other check.
+function validateSnapshot(snapshotText, opts) {
+  const maxChars = (opts && opts.maxChars) || 256 * 1024
   if (typeof snapshotText !== 'string') s.fail('invalid_json', "That file isn't valid JSON")
-  if (snapshotText.length > MAX_SNAPSHOT_CHARS) {
-    s.fail('too_large', 'The snapshot is larger than 256 KB')
+  if (snapshotText.length > maxChars) {
+    s.fail('too_large', `The snapshot is larger than ${Math.round(maxChars / 1024)} KB`)
   }
   let v
   try {
@@ -99,11 +185,12 @@ function validateSnapshot(snapshotText) {
   if (!v || typeof v !== 'object' || Array.isArray(v)) {
     s.fail('invalid_snapshot', "That file isn't a Stocky discovery snapshot")
   }
-  if (v.schema !== SCHEMA) {
-    s.fail('invalid_schema', `Unsupported snapshot format (expected ${SCHEMA})`)
+  if (SCHEMAS.indexOf(v.schema) < 0) {
+    s.fail('invalid_schema', `Unsupported snapshot format (expected ${SCHEMAS.join(' or ')})`)
   }
+  const isV1 = v.schema === 'stocky.discovery/1'
   const host = v.host && typeof v.host === 'object' && !Array.isArray(v.host) ? v.host : {}
-  if (host.virtual === true) {
+  if (isV1 && host.virtual === true) {
     s.fail(
       'virtual_host',
       'This snapshot is from a virtual machine; Stocky tracks physical hardware only',
@@ -118,17 +205,19 @@ function validateSnapshot(snapshotText) {
   const ignored = []
   const items = []
   const serials = {}
+  const allowedKinds = isV1
+    ? ['system', 'board', 'cpu', 'memory', 'drive', 'nic', 'usb', 'hat']
+    : KINDS
   for (const entry of v.items) {
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
       ignored.push({ kind: '', reason: 'not an item' })
       continue
     }
-    if (KINDS.indexOf(entry.kind) < 0) {
+    if (allowedKinds.indexOf(entry.kind) < 0) {
       ignored.push({ kind: text(entry.kind, 20) || '', reason: 'unknown kind' })
       continue
     }
     const item = cleanItem(entry)
-    // a serial reported twice can't identify two items
     const key = s.serialKey(item.serial)
     if (key) {
       if (serials[key]) {
@@ -148,18 +237,39 @@ function validateSnapshot(snapshotText) {
           .filter((x) => x)
       : []
   const machineIdHash = text(host.machineIdHash, 80)
+  const vType =
+    typeof host.virtualType === 'string' && VIRTUAL_TYPES.indexOf(host.virtualType) >= 0
+      ? host.virtualType
+      : host.virtual === true
+        ? 'kvm'
+        : 'bare-metal'
+  const cleanHost = {
+    hostname: text(host.hostname, 80) || '',
+    machineIdHash:
+      machineIdHash && /^sha256:[0-9a-f]{64}$/.test(machineIdHash) ? machineIdHash : '',
+    platform: text(host.platform, 40) || '',
+    virtual: host.virtual === true,
+    virtualType: vType,
+    model: text(host.model, 120) || '',
+  }
+  const os = cleanOs(host.os)
+  if (os) cleanHost.os = os
+  const uptimeSeconds = int(host.uptimeSeconds, 315360000)
+  if (uptimeSeconds !== null) cleanHost.uptimeSeconds = uptimeSeconds
+  const cpuSummary = cleanCpuSummary(host.cpuSummary)
+  if (cpuSummary) cleanHost.cpuSummary = cpuSummary
+  const memorySummary = cleanMemorySummary(host.memorySummary)
+  if (memorySummary) cleanHost.memorySummary = memorySummary
+  const storageSummary = cleanStorageSummary(host.storageSummary)
+  if (storageSummary) cleanHost.storageSummary = storageSummary
+  const smartSummary = cleanSmartSummary(host.smartSummary)
+  if (smartSummary) cleanHost.smartSummary = smartSummary
+
   return {
-    schema: SCHEMA,
+    schema: v.schema,
     collector: text(v.collector, 60) || '',
     collectedAt: text(v.collectedAt, 40) || '',
-    host: {
-      hostname: text(host.hostname, 80) || '',
-      machineIdHash:
-        machineIdHash && /^sha256:[0-9a-f]{64}$/.test(machineIdHash) ? machineIdHash : '',
-      platform: text(host.platform, 40) || '',
-      virtual: false,
-      model: text(host.model, 120) || '',
-    },
+    host: cleanHost,
     items: items,
     skipped: list(v.skipped, (x) =>
       x && typeof x === 'object'
@@ -406,6 +516,7 @@ function checkedByDefault(item, sbc) {
     case 'drive':
     case 'memory':
     case 'hat':
+    case 'gpu':
       return true
     case 'nic':
       return item.bus === 'usb' || item.onboard === false
@@ -415,6 +526,140 @@ function checkedByDefault(item, sbc) {
       return sbc
     default:
       return false
+  }
+}
+
+function inferFormFactor(snapshot, current) {
+  if (current) return current
+  const vt = snapshot.host.virtualType || ''
+  if (vt === 'nas' || /synology|qnap|truenas/i.test(snapshot.host.model || '')) return 'nas'
+  if (vt === 'kvm' || vt === 'cloud' || vt === 'xen') return 'vps'
+  if (vt === 'vmware' || vt === 'hyperv' || vt === 'wsl' || vt === 'lxc') return 'vm'
+  if (isSbc(snapshot)) return 'sbc'
+  if (/thinkpad|latitude|macbook|laptop/i.test(snapshot.host.model || '')) return 'laptop'
+  if (/router|fritz|openwrt|mikrotik|unifi/i.test(snapshot.host.model || '')) return 'network'
+  if (/poweredge|proliant|epyc|xeon|supermicro/i.test(snapshot.host.model || '')) return 'server'
+  return 'workstation'
+}
+
+function buildHostSpecs(snapshot) {
+  const h = snapshot.host || {}
+  const items = snapshot.items || []
+  const cpuItem = items.filter((i) => i.kind === 'cpu')[0]
+  const memItems = items.filter((i) => i.kind === 'memory')
+  const sysItem = items.filter((i) => i.kind === 'system')[0]
+  const driveItems = items.filter((i) => i.kind === 'drive')
+  const gpuItems = items.filter((i) => i.kind === 'gpu')
+  const nicItems = items.filter((i) => i.kind === 'nic')
+  const hatItems = items.filter((i) => i.kind === 'hat')
+  const usbItems = items.filter((i) => i.kind === 'usb')
+
+  const memFromItems = memItems.reduce((acc, m) => acc + (m.sizeBytes || 0), 0)
+  const totalRam =
+    (h.memorySummary && h.memorySummary.totalBytes) ||
+    memFromItems ||
+    (sysItem && sysItem.memoryBytes) ||
+    0
+  const memType = (memItems[0] && memItems[0].memoryType) || (isSbc(snapshot) ? 'LPDDR4X' : '')
+  const totalStorage =
+    (h.storageSummary && h.storageSummary.totalBytes) ||
+    driveItems.reduce((acc, d) => acc + (d.sizeBytes || 0), 0)
+
+  return {
+    hostname: h.hostname || '',
+    platform: h.platform || '',
+    model: h.model || '',
+    virtual: !!h.virtual,
+    virtualType: h.virtualType || 'bare-metal',
+    os: h.os || null,
+    uptimeSeconds: h.uptimeSeconds || 0,
+    cpu: {
+      model: (h.cpuSummary && h.cpuSummary.model) || (cpuItem && cpuItem.model) || '',
+      vendor: (cpuItem && cpuItem.vendor) || '',
+      physicalCores:
+        (h.cpuSummary && h.cpuSummary.physicalCores) ||
+        (cpuItem && cpuItem.raw && Number(cpuItem.raw.cores)) ||
+        0,
+      logicalCores: (h.cpuSummary && h.cpuSummary.logicalCores) || 0,
+      maxMhz: (h.cpuSummary && h.cpuSummary.maxMhz) || 0,
+    },
+    memory: {
+      totalBytes: totalRam,
+      swapBytes: (h.memorySummary && h.memorySummary.swapBytes) || 0,
+      zramBytes: (h.memorySummary && h.memorySummary.zramBytes) || 0,
+      type: memType,
+      modules: memItems.map((m) => ({
+        vendor: m.vendor || '',
+        model: m.model || '',
+        serial: m.serial || '',
+        sizeBytes: m.sizeBytes || 0,
+        memoryType: m.memoryType || '',
+        speedMTs: m.speedMTs || 0,
+        slot: m.slot || '',
+      })),
+    },
+    storage: {
+      totalBytes: totalStorage,
+      driveCount: driveItems.length,
+      drives: driveItems.map((d) => ({
+        vendor: d.vendor || '',
+        model: d.model || '',
+        serial: d.serial || '',
+        sizeBytes: d.sizeBytes || 0,
+        interface: d.interface || '',
+        slot: d.slot || '',
+        smartStatus: d.smartStatus || 'UNKNOWN',
+        tempC: d.tempC !== undefined ? d.tempC : null,
+        wearPercent: d.wearPercent !== undefined ? d.wearPercent : null,
+      })),
+    },
+    gpus: gpuItems.map((g) => ({
+      vendor: g.vendor || '',
+      model: g.model || '',
+      serial: g.serial || '',
+      vramBytes: g.vramBytes || 0,
+      bus: g.bus || '',
+      slot: g.slot || '',
+    })),
+    nics: nicItems.map((n) => ({
+      vendor: n.vendor || '',
+      model: n.model || '',
+      serial: n.serial || '',
+      bus: n.bus || '',
+      onboard: !!n.onboard,
+      interface: (n.raw && n.raw.interface) || '',
+    })),
+    hats: hatItems.map((x) => ({
+      vendor: x.vendor || '',
+      model: x.model || '',
+      serial: x.serial || '',
+    })),
+    usb: usbItems.map((u) => ({
+      vendor: u.vendor || '',
+      model: u.model || '',
+      serial: u.serial || '',
+      slot: u.slot || '',
+    })),
+  }
+}
+
+function updateHostTelemetry(app, hostRecord, snapshot, extra) {
+  const h = snapshot.host || {}
+  try {
+    hostRecord.set('virtualType', h.virtualType || (h.virtual ? 'kvm' : 'bare-metal'))
+    hostRecord.set('formFactor', inferFormFactor(snapshot, hostRecord.getString('formFactor')))
+    if (h.machineIdHash) hostRecord.set('machineIdHash', h.machineIdHash)
+    hostRecord.set('lastSeenAt', snapshot.collectedAt || new Date().toISOString())
+    hostRecord.set('lastCollector', snapshot.collector || '')
+    hostRecord.set('specs', buildHostSpecs(snapshot))
+    if (h.smartSummary) hostRecord.set('smartSummary', h.smartSummary)
+    if (extra && typeof extra.driftCount === 'number') hostRecord.set('driftCount', extra.driftCount)
+    if (!hostRecord.getString('type') && h.model) {
+      hostRecord.set('type', String(h.model).slice(0, 60))
+    }
+    app.save(hostRecord)
+  } catch (_) {
+    // tolerant if run on an older schema before migration 1791072011
   }
 }
 
@@ -1223,13 +1468,14 @@ function apply(app, uid, body) {
   }
   ignoredList = ignoredList.slice(-500)
 
-  s.markReferenced(app, app.findRecordById('hosts', H.id))
+  const hostAfter = app.findRecordById('hosts', H.id)
+  s.markReferenced(app, hostAfter)
   if (JSON.stringify(ignoredList) !== JSON.stringify(state.ignored)) {
-    const hostRecord = app.findRecordById('hosts', H.id)
-    hostRecord.set('discoveryIgnored', ignoredList)
-    app.save(hostRecord)
+    hostAfter.set('discoveryIgnored', ignoredList)
+    app.save(hostAfter)
     imp.set('ignoredBefore', state.ignored)
   }
+  updateHostTelemetry(app, hostAfter, snapshot, { driftCount: 0 })
   summary.serialsLinked = serialsLinked
   const user = app.findRecordById('users', uid)
   imp.set('movements', movements)
@@ -1346,4 +1592,17 @@ function undoImport(app, uid, id, date) {
   return { import: imp, reversed: ids.length }
 }
 
-module.exports = { validateSnapshot, suggestName, itemKey, preview, apply, undoImport }
+module.exports = {
+  validateSnapshot,
+  suggestName,
+  itemKey,
+  preview,
+  apply,
+  undoImport,
+  compute,
+  loadState,
+  hashOf,
+  inferFormFactor,
+  buildHostSpecs,
+  updateHostTelemetry,
+}

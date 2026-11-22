@@ -6,15 +6,28 @@ import AboutDialog from '@/components/AboutDialog.vue'
 
 // Spec §4 layout: bottom nav on phones, a left sidebar from 768 px.
 const route = useRoute()
-const { online } = useInventory()
+const { online, driftHostCount, totalDriftCount } = useInventory()
 const about = useAbout()
 
-// a tab stays highlighted on its sub-pages (Parts on a part's detail page)
+// a tab stays highlighted on its sub-pages (Parts on a part's detail page, Fleet on Host Inspector)
 const tabs = [
   { to: { name: 'home' }, label: 'Home', icon: '⌂', routes: ['home'] },
+  {
+    to: { name: 'fleet' },
+    label: 'Fleet',
+    icon: '❖',
+    routes: ['fleet', 'host-detail'],
+  },
   { to: { name: 'parts' }, label: 'Parts', icon: '☰', routes: ['parts', 'part'] },
   { to: { name: 'record' }, label: 'Record', icon: '＋', primary: true, routes: ['record'] },
   { to: { name: 'history' }, label: 'History', icon: '⟲', routes: ['history'] },
+  {
+    to: { name: 'fleet-drift' },
+    label: 'Drift',
+    icon: '⚡',
+    routes: ['fleet-drift'],
+    badge: true,
+  },
 ]
 </script>
 
@@ -69,6 +82,13 @@ const tabs = [
       >
         <span class="icon" aria-hidden="true">{{ tab.icon }}</span>
         <span>{{ tab.label }}</span>
+        <span
+          v-if="tab.badge && (driftHostCount || totalDriftCount) > 0"
+          class="nav-badge"
+          data-test="nav-drift-badge"
+        >
+          {{ totalDriftCount || driftHostCount }}
+        </span>
       </RouterLink>
     </nav>
 
@@ -177,7 +197,7 @@ const tabs = [
   position: fixed;
   inset: auto 0 0 0;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   border-top: 1px solid var(--color-border);
   background: var(--color-background);
   padding-bottom: env(safe-area-inset-bottom);
@@ -185,13 +205,29 @@ const tabs = [
 }
 
 .tab {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 56px;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--color-text-muted);
+}
+
+.nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: hsl(35, 92%, 48%);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .tab .icon {

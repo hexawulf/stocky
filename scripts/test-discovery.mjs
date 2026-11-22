@@ -188,10 +188,18 @@ r = await attempt(() =>
 eq('a parsed object instead of the file text: invalid_json', 'invalid_json', r.code)
 r = await attempt(() => preview(PIB, '[1,2]'))
 eq('JSON that is not an object: invalid_snapshot', 'invalid_snapshot', r.code)
-r = await attempt(() => preview(PIB, { ...snap('x', []), schema: 'stocky.discovery/2' }))
+r = await attempt(() => preview(PIB, { ...snap('x', []), schema: 'stocky.discovery/99' }))
 eq('wrong schema: invalid_schema', 'invalid_schema', r.code)
 r = await attempt(() => preview(PIB, snap('x', [], { host: { hostname: 'vm', virtual: true } })))
-eq('virtual: true refused: virtual_host', 'virtual_host', r.code)
+eq('virtual: true refused on v1 schema: virtual_host', 'virtual_host', r.code)
+r = await attempt(() =>
+  preview(PIB, {
+    ...snap('x', []),
+    schema: 'stocky.discovery/2',
+    host: { hostname: 'vps', platform: 'x86_64', virtual: true, virtualType: 'kvm' },
+  }),
+)
+eq('virtual: true accepted on v2 schema', 200, r.status)
 r = await attempt(() =>
   preview(
     PIB,
@@ -1246,6 +1254,127 @@ if (existsSync(FIX)) {
   }
 } else {
   console.log('(no fixtures yet)')
+}
+
+// =====================================================================================
+console.log('# automated fleet ingest, tokens, and drift inbox (Phase 2)')
+{
+  const tokRes = await post('/api/stocky/tokens', {
+    label: 'Lab Fleet Token',
+    scope: 'fleet',
+    defaultSite: LAB.id,
+    autoRegisterHosts: true,
+  })
+  check('token created with stky_ prefix', tokRes.token.startsWith('stky_'), tokRes)
+  eq('tokenPrefix is first 12 chars', tokRes.token.slice(0, 12), tokRes.record.tokenPrefix)
+  const rawTok = tokRes.token
+  const tokId = tokRes.record.id
+
+  const ingest = async (payload, token = rawTok) => {
+    const resp = await fetch(`${BASE}/api/stocky/ingest`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: typeof payload === 'string' ? payload : JSON.stringify(payload),
+    })
+    return { status: resp.status, body: await resp.json() }
+  }
+
+  let ir = await ingest(pi2Snap, '')
+  eq('ingest without token: 401', 401, ir.status)
+  ir = await ingest(pi2Snap, 'stky_invalidtoken000000000000000000')
+  eq('ingest with wrong token: 401', 401, ir.status)
+
+  // Auto-register a new KVM VPS host via v2 snapshot
+  const vpsSnap = {
+    schema: 'stocky.discovery/2',
+    collector: 'stocky-collect 2.0.0',
+    collectedAt: `${today}T10:00:00+08:00`,
+    host: {
+      hostname: 'cloud-vps-01',
+      machineIdHash: MID('7'),
+      platform: 'x86_64',
+      virtual: true,
+      virtualType: 'kvm',
+      model: 'QEMU Standard PC',
+      os: { name: 'Ubuntu', version: '26.04', kernel: '6.12.0-generic' },
+      uptimeSeconds: 3600,
+      cpuSummary: { model: 'AMD EPYC', physicalCores: 4, logicalCores: 4, maxMhz: 2800 },
+      memorySummary: { totalBytes: 8589934592, swapBytes: 0, zramBytes: 0 },
+      storageSummary: { totalBytes: 85899345920, driveCount: 1 },
+      smartSummary: { status: 'ok', maxTempC: 35, unhealthyDrives: [] },
+    },
+    items: [
+      {
+        kind: 'drive',
+        vendor: 'QEMU',
+        model: 'VirtIO Disk 80GB',
+        serial: 'VPSDISK001',
+        sizeBytes: 85899345920,
+        interface: 'virtio',
+        slot: 'virtio0',
+      },
+    ],
+    skipped: [],
+    warnings: [],
+  }
+  ir = await ingest(vpsSnap)
+  eq('first ingest of cloud-vps-01 auto-registers host and detects drift_pending', [200, 'drift_pending', 1], [
+    ir.status,
+    ir.body.status,
+    ir.body.driftCount,
+  ])
+  const vpsHost = await pb.collection('hosts').getOne(ir.body.hostId)
+  eq(
+    'host telemetry updated: formFactor=vps, virtualType=kvm, driftCount=1, cores=4',
+    ['vps', 'kvm', 1, 4],
+    [vpsHost.formFactor, vpsHost.virtualType, vpsHost.driftCount, vpsHost.specs?.cpu?.physicalCores],
+  )
+
+  // Apply the pending drift from Drift Inbox
+  const applyRes = await post(`/api/stocky/drift/${ir.body.snapshotId}/apply`, { date: today })
+  eq('drift apply writes 1 movement and marks applied', [1, 'applied'], [
+    applyRes.movements,
+    applyRes.status,
+  ])
+  const vpsHostAfter = await pb.collection('hosts').getOne(vpsHost.id)
+  eq('host driftCount reset to 0 after apply', 0, vpsHostAfter.driftCount)
+
+  // Re-ingest identical snapshot -> status: clean, 0 drift
+  ir = await ingest(vpsSnap)
+  eq('re-ingest identical snapshot is clean (0 drift)', [200, 'clean', 0], [
+    ir.status,
+    ir.body.status,
+    ir.body.driftCount,
+  ])
+
+  // Ingest drifted snapshot (new GPU added) -> drift_pending, then dismiss it
+  const vpsDrifted = {
+    ...vpsSnap,
+    items: [
+      ...vpsSnap.items,
+      { kind: 'gpu', vendor: 'NVIDIA', model: 'NVIDIA L4', serial: 'GPUL401', vramBytes: 25769803776, bus: 'pci' },
+    ],
+  }
+  ir = await ingest(vpsDrifted)
+  eq('added GPU triggers drift_pending', ['drift_pending', 1], [ir.body.status, ir.body.driftCount])
+  const dismissRes = await post(`/api/stocky/drift/${ir.body.snapshotId}/dismiss`, {})
+  eq('drift dismiss marks dismissed and resets driftCount', ['dismissed', 0], [
+    dismissRes.status,
+    (await pb.collection('hosts').getOne(vpsHost.id)).driftCount,
+  ])
+
+  // Revoke token -> subsequent ingest returns 401
+  await post(`/api/stocky/tokens/${tokId}/revoke`, {})
+  ir = await ingest(vpsSnap)
+  eq('revoked token returns 401', 401, ir.status)
+
+  // Static collector serving check
+  const colResp = await fetch(`${BASE}/tools/stocky-collect.sh`)
+  const shaResp = await fetch(`${BASE}/tools/stocky-collect.sh.sha256`)
+  eq('/tools/stocky-collect.sh and .sha256 served (200)', [200, 200], [colResp.status, shaResp.status])
 }
 
 // =====================================================================================

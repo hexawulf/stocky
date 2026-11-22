@@ -34,6 +34,9 @@ async function mountShellAt(path) {
         component: AppShell,
         children: [
           { path: '', name: 'home', component: stub },
+          { path: 'fleet', name: 'fleet', component: stub },
+          { path: 'fleet/drift', name: 'fleet-drift', component: stub },
+          { path: 'fleet/:id', name: 'host-detail', component: stub },
           { path: 'parts', name: 'parts', component: stub },
           { path: 'record', name: 'record', component: stub },
           { path: 'history', name: 'history', component: stub },

@@ -1,0 +1,14 @@
+{
+  "schema": "stocky.discovery/2",
+  "collector": "stocky-collect 2.0.0",
+  "collectedAt": "2026-10-05T09:00:00+08:00",
+  "host": {"hostname": "nas-box", "machineIdHash": "sha256:5e06f3f870daa3e77006ba0c895029cbd76a9f46dd3c388c1335d5b8be63772b", "platform": "x86_64", "virtual": false, "virtualType": "nas", "model": "Synology DS423+", "os": {"name": "Synology DSM", "version": "7.2.2-72806", "kernel": "4.4.302+"}, "uptimeSeconds": 950000, "cpuSummary": {"model": "Intel(R) Celeron(R) J4125 CPU @ 2.00GHz", "physicalCores": 4, "logicalCores": 4}, "memorySummary": {"totalBytes": 8388608000, "swapBytes": 4294967296, "zramBytes": 0}, "storageSummary": {"totalBytes": 16003126444032, "driveCount": 2}, "smartSummary": {"status": "ok", "maxTempC": 37, "unhealthyDrives": []}},
+  "items": [
+    {"kind": "system", "vendor": "Synology", "model": "Synology DS423+", "serial": "2090SBR123456"},
+    {"kind": "cpu", "vendor": "Intel", "model": "Intel(R) Celeron(R) J4125 CPU @ 2.00GHz", "raw": {"cores": "4", "architecture": "x86_64"}},
+    {"kind": "drive", "model": "ST8000VN004-2M2101", "serial": "WSD10001", "sizeBytes": 8001563222016, "interface": "sata", "slot": "ata1", "removable": false, "smartStatus": "PASSED", "tempC": 36, "raw": {"name": "sda", "rotational": "1"}},
+    {"kind": "drive", "model": "ST8000VN004-2M2101", "serial": "WSD10002", "sizeBytes": 8001563222016, "interface": "sata", "slot": "ata2", "removable": false, "smartStatus": "PASSED", "tempC": 37, "raw": {"name": "sdb", "rotational": "1"}}
+  ],
+  "skipped": [{"kind": "memory", "reason": "dmidecode needs sudo (sudo -n is not allowed without a password here)"}],
+  "warnings": []
+}

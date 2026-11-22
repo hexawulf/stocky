@@ -52,6 +52,12 @@ jobs:
       - name: Server suites (downloads and verifies the pinned PocketBase)
         run: scripts/test-api.sh --download
 
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Playwright E2E smoke suite
+        run: npm run test:e2e
+
       - name: Upload the test log
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
