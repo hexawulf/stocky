@@ -184,6 +184,14 @@ test.describe('Stocky 1.0 E2E Smoke Suite', () => {
     await page.goto('/stock')
     await expect(page.locator('[data-test="installed"]')).toBeVisible()
 
+    // Verify ⌘K / top-cmd Command Palette searches hosts & drive serials
+    await page.locator('[data-test="top-cmd"]').click()
+    await expect(page.locator('[data-test="cmd-dialog"]')).toBeVisible()
+    await page.locator('[data-test="cmd-input"]').fill('WDSWAP999999')
+    await expect(page.locator('[data-test="cmd-list"]')).toContainText('WD Black SN850X 2TB')
+    await page.keyboard.press('Escape')
+    await expect(page.locator('[data-test="cmd-dialog"]')).toHaveCount(0)
+
     // 9. Mobile 390x844 zero horizontal overflow
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto('/fleet')

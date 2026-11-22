@@ -46,7 +46,7 @@ It runs as **one Docker container**: [PocketBase](https://pocketbase.io)
 - **Zero-Noise Drift Inbox (`/fleet/drift`):** Automatic snapshots update harmless telemetry (`lastSeenAt`, OS/kernel, SMART temps) live while queuing physical hardware changes (added NVMe, swapped RAM, missing drive) in the Drift Inbox for 1-click transactional confirmation.
 - **Privacy-Safe Visual & Spec Exports:** Export your fleet as standalone **SVG**, **2× High-DPI PNG**, **Markdown spec table**, or **JSON** — with **Privacy Redaction ON by default** (strips serial numbers, MAC addresses, `machineIdHash`, and optional host anonymization).
 - **Parts, Movements & History:** Catalog of part types (`pcs`, `sheets`, `m`), spare stock per site and In transit, low-stock alerts, unit prices (`TWD`, `EUR`, `USD`), append-only transactional movements, and 24-hour undo.
-- **Frictionless Onboarding & Appearance:** Built-in `standard`, `example`, and `demo_fleet` presets (plus custom `pb_data/stocky-presets.json`), a **Load Demo Fleet** button on empty instances, and instant **Light / Dark / System** theme switching.
+- **Frictionless Onboarding, `⌘K` Command Palette & Appearance:** Global `⌘K` / `Ctrl+K` Command Palette (instant fuzzy search across hosts, drive serials, GPUs, NIC MAC/IPs, parts, and actions), built-in `standard`, `example`, and `demo_fleet` presets, a **Load Demo Fleet** button on empty instances, and instant **Light / Dark / System** theme switching.
 
 ## Run it
 

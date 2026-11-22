@@ -3,8 +3,21 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import { createMemoryHistory, createRouter } from 'vue-router'
 
-const fx = vi.hoisted(() => ({ online: null, user: null }))
-vi.mock('@/stores/inventory.js', () => ({ useInventory: () => ({ online: fx.online }) }))
+const fx = vi.hoisted(() => ({
+  online: null,
+  user: null,
+  hosts: null,
+  parts: null,
+  locations: null,
+}))
+vi.mock('@/stores/inventory.js', () => ({
+  useInventory: () => ({
+    online: fx.online,
+    hosts: fx.hosts,
+    parts: fx.parts,
+    locations: fx.locations,
+  }),
+}))
 vi.mock('@/stores/auth.js', () => ({ useAuth: () => ({ user: fx.user }) }))
 vi.mock('@/lib/api.js', () => ({ getAbout: vi.fn() }))
 vi.mock('@/lib/pb.js', () => ({ pb: { realtime: { isConnected: true } } }))
@@ -61,6 +74,9 @@ const key = async (k, opts = {}) => {
 
 beforeEach(() => {
   fx.online = ref(true)
+  fx.hosts = ref([])
+  fx.parts = ref([])
+  fx.locations = ref([])
   fx.user = ref({ id: 'u1', email: 'a@test.local', seedPreset: 'example' })
   getAbout.mockReset().mockResolvedValue({ pocketbase: '0.40.4', schema: '1791072010' })
 })
@@ -70,11 +86,14 @@ afterEach(() => {
 })
 
 describe('About dialog (spec §4)', () => {
-  it('top bar: Import is the only labelled control; Theme, About and Settings are matching icons', async () => {
+  it('top bar: Import is the only labelled control; Search, Theme, About and Settings are matching icons', async () => {
     const w = await mountShell()
+    const cmd = w.get('[data-test="top-cmd"]')
     const theme = w.get('[data-test="top-theme"]')
     const about = w.get('[data-test="top-about"]')
     const settings = w.get('[data-test="top-settings"]')
+    expect(cmd.classes()).toContain('icon-btn')
+    expect(cmd.findAll('span:not([aria-hidden="true"])')).toHaveLength(0)
     expect(theme.classes()).toContain('icon-btn')
     expect(theme.findAll('span:not([aria-hidden="true"])')).toHaveLength(0)
     for (const [el, name] of [

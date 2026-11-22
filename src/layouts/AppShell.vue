@@ -1,15 +1,33 @@
 <script setup>
+import { onBeforeUnmount, onMounted } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { useInventory } from '@/stores/inventory.js'
 import { useAbout } from '@/composables/useAbout.js'
 import { useTheme } from '@/composables/useTheme.js'
+import { useCommandPalette } from '@/composables/useCommandPalette.js'
 import AboutDialog from '@/components/AboutDialog.vue'
+import CommandPalette from '@/components/CommandPalette.vue'
 
 // Spec §4 layout: bottom nav on phones, a left sidebar from 768 px.
 const route = useRoute()
 const { online, driftHostCount, totalDriftCount } = useInventory()
 const about = useAbout()
 const { effectiveTheme, toggleTheme } = useTheme()
+const cmd = useCommandPalette()
+
+function onGlobalKeydown(e) {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault()
+    cmd.toggle()
+  }
+}
+
+onMounted(() => {
+  if (typeof window !== 'undefined') window.addEventListener('keydown', onGlobalKeydown)
+})
+onBeforeUnmount(() => {
+  if (typeof window !== 'undefined') window.removeEventListener('keydown', onGlobalKeydown)
+})
 
 // Fleet is the primary home view ('home' / 'fleet'); Stock is the second tab ('stock')
 const tabs = [
@@ -50,7 +68,18 @@ const tabs = [
           </svg>
           <span>Import</span>
         </RouterLink>
-        <!-- Import is the only labelled control; Theme, About and Settings are icons -->
+        <!-- Import is the only labelled control; Search, Theme, About and Settings are icons -->
+        <button
+          type="button"
+          class="icon-btn"
+          aria-label="Search & Command Palette (Ctrl+K)"
+          title="Search & Command Palette (Ctrl+K)"
+          aria-haspopup="dialog"
+          data-test="top-cmd"
+          @click="cmd.open"
+        >
+          <span aria-hidden="true">⌕</span>
+        </button>
         <button
           type="button"
           class="icon-btn"
@@ -114,6 +143,7 @@ const tabs = [
     </main>
 
     <AboutDialog v-if="about.isOpen.value" @close="about.close" />
+    <CommandPalette v-if="cmd.isOpen.value" @close="cmd.close" />
   </div>
 </template>
 

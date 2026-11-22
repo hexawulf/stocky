@@ -24,6 +24,7 @@ export const WHATS_NEW = [
   'Universal collector v2.0 (bare-metal, Raspberry Pi, KVM/Cloud VPS, Synology NAS, WSL2, GPU & SMART)',
   'Automated push/pull ingest tokens (SHA-256 hashed) + Drift Inbox with 1-click ledger apply & undo',
   'Host Hardware Anatomy SVG Inspector & privacy-redacted SVG, 2× PNG, Markdown, and JSON exports',
+  'Global ⌘K / Ctrl+K Command Palette (instant search across hosts, drive serials, GPUs, MACs, and parts) + Light/Dark theme toggle',
 ]
 
 export const CONTACT = {
