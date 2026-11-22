@@ -18,16 +18,29 @@ It runs as **one Docker container**: [PocketBase](https://pocketbase.io)
 (auth, SQLite, API rules, realtime SSE) serving a Vue 3 app. No cloud services, no external dependencies.
 
 <p align="center">
-  <img src="docs/screenshots/fleet-rack.png" alt="Stocky Fleet Rack & Chassis View" width="460">
+  <img src="docs/screenshots/fleet-rack.png" alt="Stocky 1.1 Fleet Rack & Chassis View (Dark Mode)" width="460">
   &nbsp;&nbsp;
-  <img src="docs/screenshots/fleet-topology.png" alt="Stocky Interactive Fleet Topology SVG" width="460">
+  <img src="docs/screenshots/fleet-light.png" alt="Stocky 1.1 Fleet Rack & Chassis View (Light Mode)" width="460">
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/host-inspector.png" alt="Stocky Host Hardware Anatomy Inspector" width="460">
+  <img src="docs/screenshots/fleet-topology.png" alt="Stocky 1.1 Interactive Fleet Topology SVG" width="460">
   &nbsp;&nbsp;
-  <img src="docs/screenshots/home.png" alt="Stocky Spare Parts & Low Stock Home View" width="280">
+  <img src="docs/screenshots/command-palette.png" alt="Stocky 1.1 Global Cmd+K Command Palette & Serial Search" width="460">
 </p>
+
+<p align="center">
+  <img src="docs/screenshots/host-inspector.png" alt="Stocky 1.1 Host Hardware Anatomy Inspector" width="460">
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/stock-overview.png" alt="Stocky 1.1 Spare Stock & Installed Hardware View" width="460">
+</p>
+
+## What's new in v1.1.0
+
+- **Global `⌘K` / `Ctrl+K` Command Palette:** Instant fuzzy search from any screen (`⌘K`, `Ctrl+K`, or top-bar `⌕` button) across every **Host**, physical **Drive by Serial Number**, **GPU**, **NIC MAC / IPv4**, **Part Type**, and **Quick Actions**.
+- **Light / Dark / System Theme Toggle:** 1-click top-bar theme switcher (`☀` / `☾`) plus a `System / Light / Dark` selector in Settings (`/settings`).
+- **Fleet-First Navigation:** **Fleet** (`/` and `/fleet`) is now the primary landing view, with **Stock** (`/stock` — spare stock per site, low-stock alerts, and installed units) second in the navigation bar.
+- **Hardened Multi-Platform Discovery (`stocky-collect.sh` v2.0 + `stocky-fleet-pull.sh`):** First-class support for bare-metal Linux, Raspberry Pi 4/5 (`arm64`), Cloud KVM VPSes, Synology DSM NASes (`synoinfo.conf` + `/sys/block` + Synology `smartctl`), and Windows WSL2 hosts (`/usr/lib/wsl/lib/nvidia-smi`).
 
 ## What it does
 

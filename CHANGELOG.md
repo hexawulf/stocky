@@ -5,6 +5,23 @@ All notable changes to Stocky. The format follows
 [Semantic Versioning](https://semver.org/). Docker images are published as
 `0xwulf/stocky:<version>`, `:<major>.<minor>` and `:latest`.
 
+## [1.1.0] - 2026-11-22
+
+### Added
+
+- **Global `⌘K` / `Ctrl+K` Command Palette (`CommandPalette.vue`):**
+  - Instant fuzzy search from anywhere (`⌘K`, `Ctrl+K`, or top-bar `⌕` icon) across every **Host** (site, OS, CPU, RAM, tags), physical **Drive** (model, slot/device, **serial number**, SMART status, temperature), **GPU** (model, vendor, VRAM), **NIC** (interface, MAC address, IPv4), **Part Type**, and **Quick Actions** (*Fleet*, *Stock*, *Record*, *Connect Host*, *Drift Inbox*, *Toggle Light/Dark Theme*).
+- **Light / Dark / System Theme System (`useTheme.js`):**
+  - Explicit `:root[data-theme="light"]` and `:root[data-theme="dark"]` design tokens with automatic `prefers-color-scheme` fallback.
+  - 1-click top-bar theme toggle (`☀` / `☾`) plus a `System / Light / Dark` Appearance selector in Settings (`/settings`), persisted in `localStorage`.
+- **Collector Hardening for Synology DSM & WSL2 (`tools/stocky-collect.sh`, `tools/stocky-fleet-pull.sh`):**
+  - Prioritizes `/etc.defaults/synoinfo.conf` on Synology DSM so migrated arrays report actual hardware model, adds `/proc/cpuinfo` and `/sys/block` + `/volume1/@appstore/synocli-disk/sbin/smartctl` fallbacks when `lscpu`/`lsblk` are absent, and detects WSL2 NVIDIA GPUs via `/usr/lib/wsl/lib/nvidia-smi`.
+  - Fixed `ssh` stdin redirection in `tools/stocky-fleet-pull.sh` and added hostname normalization (`plus` ↔ `+`, `-brix` suffix) in `pb_hooks/ingest.pb.js`.
+
+### Changed
+
+- **Navigation & Default Home View:** Promoted **Fleet** (`/` and `/fleet`) to the primary home screen and placed **Stock** (`/stock`, spare stock by site, low-stock alerts, and installed units) second in the navigation bar.
+
 ## [1.0.0] - 2026-11-22
 
 ### Added
@@ -103,6 +120,7 @@ Initial public release.
 - One multi-arch Docker image (amd64/arm64): PocketBase serving the Vue app,
   Alpine, non-root.
 
+[1.1.0]: https://github.com/hexawulf/stocky/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/hexawulf/stocky/compare/v0.1.3...v1.0.0
 [0.1.3]: https://github.com/hexawulf/stocky/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/hexawulf/stocky/compare/v0.1.1...v0.1.2
