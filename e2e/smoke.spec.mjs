@@ -158,7 +158,16 @@ test.describe('Stocky 1.0 E2E Smoke Suite', () => {
     expect(mdPreviewText).not.toContain('2c:cf:67:00:00:01')
     await page.locator('[data-test="export-close"]').click()
 
-    // 8. About modal attribution + Escape close
+    // 8. About modal attribution + Escape close + Theme toggle (light/dark)
+    const themeToggle = page.locator('[data-test="top-theme"]')
+    await expect(themeToggle).toBeVisible()
+    await themeToggle.click()
+    const themeAttr1 = await page.evaluate(() => document.documentElement.getAttribute('data-theme'))
+    expect(['light', 'dark']).toContain(themeAttr1)
+    await themeToggle.click()
+    const themeAttr2 = await page.evaluate(() => document.documentElement.getAttribute('data-theme'))
+    expect(themeAttr2).not.toBe(themeAttr1)
+
     await page.locator('[data-test="top-about"]').click()
     const aboutDialog = page.getByRole('dialog')
     await expect(aboutDialog).toBeVisible()
@@ -168,6 +177,12 @@ test.describe('Stocky 1.0 E2E Smoke Suite', () => {
     await expect(aboutDialog.locator('[data-test="about-mail"]')).toHaveText('dev@0xwulf.dev')
     await page.keyboard.press('Escape')
     await expect(aboutDialog).toHaveCount(0)
+
+    // Verify root '/' is Fleet view and '/stock' is the second tab (Stock view)
+    await page.goto('/')
+    await expect(page.locator('[data-test="fleet-view"]')).toBeVisible()
+    await page.goto('/stock')
+    await expect(page.locator('[data-test="installed"]')).toBeVisible()
 
     // 9. Mobile 390x844 zero horizontal overflow
     await page.setViewportSize({ width: 390, height: 844 })

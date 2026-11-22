@@ -6,6 +6,8 @@ import { CURRENCIES } from './format.js'
 const LAST_CURRENCY = 'stocky.lastCurrency'
 const FLEET_NAME = 'stocky.fleetName'
 const STALE_HOURS = 'stocky.staleHours'
+const THEME = 'stocky.theme'
+export const THEMES = ['system', 'light', 'dark']
 
 function storage() {
   try {
@@ -65,5 +67,21 @@ export function setStaleHours(hours) {
   try {
     const n = Number(hours)
     if (Number.isInteger(n) && n >= 1 && n <= 720) storage()?.setItem(STALE_HOURS, String(n))
+  } catch {}
+}
+
+export function getTheme() {
+  try {
+    const v = storage()?.getItem(THEME) ?? 'system'
+    return THEMES.includes(v) ? v : 'system'
+  } catch {
+    return 'system'
+  }
+}
+
+export function setTheme(theme) {
+  if (!THEMES.includes(theme)) return
+  try {
+    storage()?.setItem(THEME, theme)
   } catch {}
 }

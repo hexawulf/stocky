@@ -165,6 +165,7 @@ export async function mountAt(component, path, { routeName } = {}) {
   const names = {
     home: '/',
     fleet: '/fleet',
+    stock: '/stock',
     'fleet-drift': '/fleet/drift',
     'host-detail': '/fleet/:id',
     parts: '/parts',

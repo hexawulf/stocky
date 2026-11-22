@@ -1,5 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { getLastCurrency, setLastCurrency } from './prefs.js'
+import {
+  getFleetName,
+  getLastCurrency,
+  getStaleHours,
+  getTheme,
+  setFleetName,
+  setLastCurrency,
+  setStaleHours,
+  setTheme,
+} from './prefs.js'
 
 afterEach(() => {
   vi.unstubAllGlobals()
@@ -33,5 +42,23 @@ describe('last used currency (spec §4.7, decision #21)', () => {
     })
     expect(() => setLastCurrency('EUR')).not.toThrow()
     expect(getLastCurrency()).toBe('')
+  })
+
+  it('round-trips theme, fleetName, and staleHours preferences', () => {
+    expect(getTheme()).toBe('system')
+    setTheme('light')
+    expect(getTheme()).toBe('light')
+    setTheme('dark')
+    expect(getTheme()).toBe('dark')
+    setTheme('bogus')
+    expect(getTheme()).toBe('dark')
+
+    expect(getFleetName()).toBe('My Homelab Fleet')
+    setFleetName('HexaWulf Fleet')
+    expect(getFleetName()).toBe('HexaWulf Fleet')
+
+    expect(getStaleHours()).toBe(48)
+    setStaleHours(72)
+    expect(getStaleHours()).toBe(72)
   })
 })

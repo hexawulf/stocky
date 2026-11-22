@@ -21,8 +21,10 @@
   --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
 }
 
-/* semantic color variables for this project */
-:root {
+/* semantic color variables for this project (default: light theme) */
+:root,
+:root[data-theme='light'] {
+  color-scheme: light;
   --color-background: var(--vt-c-white);
   --color-background-soft: var(--vt-c-white-soft);
   --color-background-mute: var(--vt-c-white-mute);
@@ -42,8 +44,28 @@
   --section-gap: 160px;
 }
 
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-background: var(--vt-c-black);
+  --color-background-soft: var(--vt-c-black-soft);
+  --color-background-mute: var(--vt-c-black-mute);
+
+  --color-border: var(--vt-c-divider-dark-2);
+  --color-border-hover: var(--vt-c-divider-dark-1);
+
+  --color-heading: var(--vt-c-text-dark-1);
+  --color-text: var(--vt-c-text-dark-2);
+  --color-text-muted: rgba(235, 235, 235, 0.5);
+
+  --color-accent: hsl(160, 70%, 50%);
+  --color-accent-strong: hsl(160, 70%, 60%);
+  --color-accent-soft: hsla(160, 70%, 50%, 0.14);
+  --color-on-accent: var(--vt-c-black);
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
     --color-background: var(--vt-c-black);
     --color-background-soft: var(--vt-c-black-soft);
     --color-background-mute: var(--vt-c-black-mute);

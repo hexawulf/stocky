@@ -2,21 +2,28 @@
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { useInventory } from '@/stores/inventory.js'
 import { useAbout } from '@/composables/useAbout.js'
+import { useTheme } from '@/composables/useTheme.js'
 import AboutDialog from '@/components/AboutDialog.vue'
 
 // Spec §4 layout: bottom nav on phones, a left sidebar from 768 px.
 const route = useRoute()
 const { online, driftHostCount, totalDriftCount } = useInventory()
 const about = useAbout()
+const { effectiveTheme, toggleTheme } = useTheme()
 
-// a tab stays highlighted on its sub-pages (Parts on a part's detail page, Fleet on Host Inspector)
+// Fleet is the primary home view ('home' / 'fleet'); Stock is the second tab ('stock')
 const tabs = [
-  { to: { name: 'home' }, label: 'Home', icon: '⌂', routes: ['home'] },
   {
-    to: { name: 'fleet' },
+    to: { name: 'home' },
     label: 'Fleet',
     icon: '❖',
-    routes: ['fleet', 'host-detail'],
+    routes: ['home', 'fleet', 'host-detail'],
+  },
+  {
+    to: { name: 'stock' },
+    label: 'Stock',
+    icon: '⌂',
+    routes: ['stock'],
   },
   { to: { name: 'parts' }, label: 'Parts', icon: '☰', routes: ['parts', 'part'] },
   { to: { name: 'record' }, label: 'Record', icon: '＋', primary: true, routes: ['record'] },
@@ -43,7 +50,17 @@ const tabs = [
           </svg>
           <span>Import</span>
         </RouterLink>
-        <!-- Import is the only labelled control; About and Settings are icons -->
+        <!-- Import is the only labelled control; Theme, About and Settings are icons -->
+        <button
+          type="button"
+          class="icon-btn"
+          :aria-label="effectiveTheme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
+          :title="effectiveTheme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
+          data-test="top-theme"
+          @click="toggleTheme"
+        >
+          <span aria-hidden="true">{{ effectiveTheme === 'dark' ? '☀' : '☾' }}</span>
+        </button>
         <button
           type="button"
           class="icon-btn"

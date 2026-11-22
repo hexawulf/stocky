@@ -10,10 +10,12 @@ import { describeError } from '@/lib/errors.js'
 import { formatQty, placeLabel } from '@/lib/format.js'
 import { showToast } from '@/stores/toast.js'
 import { useAbout } from '@/composables/useAbout.js'
+import { useTheme } from '@/composables/useTheme.js'
 import { getFleetName, getStaleHours, setFleetName, setStaleHours } from '@/lib/prefs.js'
 
 const { user, logout } = useAuth()
 const { records, canWrite } = useInventory()
+const { mode: themeMode, setThemeMode } = useTheme()
 
 const fleetName = ref(getFleetName())
 const staleHours = ref(getStaleHours())
@@ -115,6 +117,27 @@ const { open: openAbout } = useAbout()
         </button>
       </li>
     </ul>
+
+    <h2>Appearance</h2>
+    <div class="theme-group" role="radiogroup" aria-label="Color theme" data-test="settings-theme">
+      <button
+        v-for="opt in [
+          { id: 'system', label: 'System' },
+          { id: 'light', label: 'Light' },
+          { id: 'dark', label: 'Dark' },
+        ]"
+        :key="opt.id"
+        type="button"
+        role="radio"
+        :aria-checked="themeMode === opt.id"
+        class="theme-pill"
+        :class="{ active: themeMode === opt.id }"
+        :data-test="`theme-${opt.id}`"
+        @click="setThemeMode(opt.id)"
+      >
+        {{ opt.label }}
+      </button>
+    </div>
 
     <h2>Fleet topology preferences</h2>
     <form class="fleet-prefs" @submit.prevent="saveFleetPrefs">
@@ -265,6 +288,31 @@ const { open: openAbout } = useAbout()
   flex-direction: column;
   gap: 0.6rem;
   max-width: 28rem;
+}
+
+.theme-group {
+  display: inline-flex;
+  border: 1px solid var(--color-border-hover);
+  border-radius: 999px;
+  padding: 0.15rem;
+  background: var(--color-background-soft);
+}
+
+.theme-pill {
+  min-height: 38px;
+  padding: 0 1rem;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.theme-pill.active {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
 }
 
 .pref-field {

@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuth } from '@/stores/auth.js'
 import AppShell from '@/layouts/AppShell.vue'
-import HomeView from '@/views/HomeView.vue'
+import FleetView from '@/views/FleetView.vue'
 
 // Every route except Login needs a session (spec §4.1); the API rules
 // enforce the same thing on the server.
@@ -18,8 +18,9 @@ const router = createRouter({
       path: '/',
       component: AppShell,
       children: [
-        { path: '', name: 'home', component: HomeView },
-        { path: 'fleet', name: 'fleet', component: () => import('@/views/FleetView.vue') },
+        { path: '', name: 'home', component: FleetView },
+        { path: 'fleet', name: 'fleet', component: FleetView },
+        { path: 'stock', name: 'stock', component: () => import('@/views/HomeView.vue') },
         {
           path: 'fleet/drift',
           name: 'fleet-drift',

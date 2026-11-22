@@ -31,7 +31,7 @@ It runs as **one Docker container**: [PocketBase](https://pocketbase.io)
 
 ## What it does
 
-- **Visual Fleet Hardware Overview (`/fleet`):**
+- **Visual Fleet Hardware Overview (`/` & `/fleet`):**
   - **KPI Summary Strip:** Live host freshness (online / stale / drift), total physical & cloud cores (`ARM64` vs `x86_64`), total RAM, total storage & SMART drive health warnings, plus optional monthly cloud spend and physical TDP power estimate.
   - **3 Switchable Visual Modes:**
     1. **Rack & Chassis View:** Hardware chassis cards grouped by Site with form-factor badges (`SBC`, `Workstation`, `NAS`, `Cloud VPS`, `Server`), CPU/RAM/OS chips, visual drive-bay slots (`NVMe`, `SATA`, `VirtIO`, `SD`) with SMART health LEDs and temperatures, plus GPU/HAT/NIC chips.
@@ -46,7 +46,7 @@ It runs as **one Docker container**: [PocketBase](https://pocketbase.io)
 - **Zero-Noise Drift Inbox (`/fleet/drift`):** Automatic snapshots update harmless telemetry (`lastSeenAt`, OS/kernel, SMART temps) live while queuing physical hardware changes (added NVMe, swapped RAM, missing drive) in the Drift Inbox for 1-click transactional confirmation.
 - **Privacy-Safe Visual & Spec Exports:** Export your fleet as standalone **SVG**, **2× High-DPI PNG**, **Markdown spec table**, or **JSON** — with **Privacy Redaction ON by default** (strips serial numbers, MAC addresses, `machineIdHash`, and optional host anonymization).
 - **Parts, Movements & History:** Catalog of part types (`pcs`, `sheets`, `m`), spare stock per site and In transit, low-stock alerts, unit prices (`TWD`, `EUR`, `USD`), append-only transactional movements, and 24-hour undo.
-- **Frictionless Onboarding:** Built-in `standard`, `example`, and `demo_fleet` presets (plus custom `pb_data/stocky-presets.json`), and a **Load Demo Fleet** button on empty instances.
+- **Frictionless Onboarding & Appearance:** Built-in `standard`, `example`, and `demo_fleet` presets (plus custom `pb_data/stocky-presets.json`), a **Load Demo Fleet** button on empty instances, and instant **Light / Dark / System** theme switching.
 
 ## Run it
 

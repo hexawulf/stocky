@@ -117,4 +117,15 @@ describe('Settings: About Stocky (spec §4)', () => {
     expect(document.activeElement).toBe(row.element) // focus comes back to the row
     w.unmount()
   })
+
+  it('switches Appearance theme between System, Light, and Dark', async () => {
+    const { wrapper: w } = await mountSettings()
+    await w.get('[data-test="theme-light"]').trigger('click')
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light')
+    await w.get('[data-test="theme-dark"]').trigger('click')
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
+    await w.get('[data-test="theme-system"]').trigger('click')
+    expect(document.documentElement.getAttribute('data-theme')).toBeNull()
+    w.unmount()
+  })
 })

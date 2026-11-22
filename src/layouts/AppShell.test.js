@@ -35,6 +35,7 @@ async function mountShellAt(path) {
         children: [
           { path: '', name: 'home', component: stub },
           { path: 'fleet', name: 'fleet', component: stub },
+          { path: 'stock', name: 'stock', component: stub },
           { path: 'fleet/drift', name: 'fleet-drift', component: stub },
           { path: 'fleet/:id', name: 'host-detail', component: stub },
           { path: 'parts', name: 'parts', component: stub },
@@ -69,5 +70,17 @@ describe('AppShell around the import screen', () => {
     const link = wrapper.get('[data-test="top-import"]')
     expect(link.classes()).toContain('import-btn')
     expect(wrapper.get('section').classes()).not.toContain('import-btn')
+  })
+
+  it('orders Fleet first and Stock second in navigation, and toggles light/dark theme in the top bar', async () => {
+    const wrapper = await mountShellAt('/')
+    const tabLabels = wrapper.findAll('nav .tab').map((t) => t.text().trim())
+    expect(tabLabels[0]).toContain('Fleet')
+    expect(tabLabels[1]).toContain('Stock')
+    const themeBtn = wrapper.get('[data-test="top-theme"]')
+    await themeBtn.trigger('click')
+    expect(['light', 'dark']).toContain(document.documentElement.getAttribute('data-theme'))
+    await themeBtn.trigger('click')
+    expect(['light', 'dark']).toContain(document.documentElement.getAttribute('data-theme'))
   })
 })

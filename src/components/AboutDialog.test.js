@@ -25,6 +25,7 @@ async function mountShell() {
         children: [
           { path: '', name: 'home', component: stub },
           { path: 'fleet', name: 'fleet', component: stub },
+          { path: 'stock', name: 'stock', component: stub },
           { path: 'fleet/drift', name: 'fleet-drift', component: stub },
           { path: 'fleet/:id', name: 'host-detail', component: stub },
         ],
@@ -69,10 +70,13 @@ afterEach(() => {
 })
 
 describe('About dialog (spec §4)', () => {
-  it('top bar: Import is the only labelled control; About and Settings are matching icons', async () => {
+  it('top bar: Import is the only labelled control; Theme, About and Settings are matching icons', async () => {
     const w = await mountShell()
+    const theme = w.get('[data-test="top-theme"]')
     const about = w.get('[data-test="top-about"]')
     const settings = w.get('[data-test="top-settings"]')
+    expect(theme.classes()).toContain('icon-btn')
+    expect(theme.findAll('span:not([aria-hidden="true"])')).toHaveLength(0)
     for (const [el, name] of [
       [about, 'About Stocky'],
       [settings, 'Settings'],
