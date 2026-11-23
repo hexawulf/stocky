@@ -59,23 +59,42 @@ svg {
   --tint: hsl(185, 70%, 36%);
 }
 
+:global(:root[data-theme='dark']) .t-stock_in {
+  --tint: hsl(145, 55%, 55%);
+}
+:global(:root[data-theme='dark']) .t-stock_out {
+  --tint: hsl(4, 80%, 66%);
+}
+:global(:root[data-theme='dark']) .t-move {
+  --tint: hsl(210, 85%, 66%);
+}
+:global(:root[data-theme='dark']) .t-install {
+  --tint: hsl(265, 70%, 72%);
+}
+:global(:root[data-theme='dark']) .t-uninstall {
+  --tint: hsl(32, 90%, 60%);
+}
+:global(:root[data-theme='dark']) .t-found_installed {
+  --tint: hsl(185, 65%, 55%);
+}
+
 @media (prefers-color-scheme: dark) {
-  .t-stock_in {
+  :global(:root:not([data-theme='light'])) .t-stock_in {
     --tint: hsl(145, 55%, 55%);
   }
-  .t-stock_out {
+  :global(:root:not([data-theme='light'])) .t-stock_out {
     --tint: hsl(4, 80%, 66%);
   }
-  .t-move {
+  :global(:root:not([data-theme='light'])) .t-move {
     --tint: hsl(210, 85%, 66%);
   }
-  .t-install {
+  :global(:root:not([data-theme='light'])) .t-install {
     --tint: hsl(265, 70%, 72%);
   }
-  .t-uninstall {
+  :global(:root:not([data-theme='light'])) .t-uninstall {
     --tint: hsl(32, 90%, 60%);
   }
-  .t-found_installed {
+  :global(:root:not([data-theme='light'])) .t-found_installed {
     --tint: hsl(185, 65%, 55%);
   }
 }

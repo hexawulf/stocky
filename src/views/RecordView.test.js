@@ -333,10 +333,10 @@ describe('Record: new part inline (stock in)', () => {
   it('offered only for a stock in', async () => {
     const w = await mountRecord({ type: 'move' })
     await w.get('#rec-part').trigger('focus')
-    expect(w.text()).not.toContain('＋ new part')
+    expect(w.text()).not.toContain('+ new part')
     await setType(w, 'stock_in')
     await w.get('#rec-part').trigger('focus')
-    expect(w.text()).toContain('＋ new part')
+    expect(w.text()).toContain('+ new part')
     w.unmount()
   })
 
@@ -345,7 +345,7 @@ describe('Record: new part inline (stock in)', () => {
     await w.get('#rec-part').setValue('MICROSD  128 gb')
     await w
       .findAll('button')
-      .find((b) => b.text().startsWith('＋ new part'))
+      .find((b) => b.text().startsWith('+ new part'))
       .trigger('click')
     await flushPromises()
     expect(w.text()).toContain("You already have 'microSD 128 GB'")
@@ -371,7 +371,7 @@ describe('Record: new part inline (stock in)', () => {
     await w.get('#rec-part').setValue('microsd 128 gb')
     await w
       .findAll('button')
-      .find((b) => b.text().startsWith('＋ new part'))
+      .find((b) => b.text().startsWith('+ new part'))
       .trigger('click')
     await flushPromises()
     await w
@@ -441,7 +441,7 @@ describe('Record: found installed and stock out from a host (spec §13.4.1–2)'
     const w = await mountRecord({ type: 'found_installed' })
     await w.get('#rec-part').setValue('Pi 5 Active Cooler')
     await flushPromises()
-    const add = w.findAll('button').find((b) => b.text().startsWith('＋ new part'))
+    const add = w.findAll('button').find((b) => b.text().startsWith('+ new part'))
     expect(add).toBeTruthy()
     await add.trigger('click')
     await flushPromises()

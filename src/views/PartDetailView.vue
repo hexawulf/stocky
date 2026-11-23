@@ -277,7 +277,7 @@ h2 {
 }
 
 .sub.low {
-  color: hsl(35, 85%, 45%);
+  color: var(--color-warn);
   font-weight: 600;
 }
 

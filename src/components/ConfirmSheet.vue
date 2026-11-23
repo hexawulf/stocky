@@ -59,7 +59,7 @@ h2 {
 
 .error {
   margin-top: 0.75rem;
-  color: hsl(0, 65%, 48%);
+  color: var(--color-danger);
 }
 
 .actions {
@@ -71,13 +71,6 @@ h2 {
 
 .btn {
   min-height: 44px;
-  border: none;
-  font: inherit;
-  cursor: pointer;
-}
-
-.btn-secondary {
-  background: none;
 }
 
 @media (min-width: 768px) {

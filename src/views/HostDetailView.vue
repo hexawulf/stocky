@@ -395,7 +395,7 @@ async function saveMeta() {
             :to="{ name: 'record', query: { type: 'install', host: host.id } }"
             class="link-btn"
           >
-            ＋ Install from spares
+            + Install from spares
           </RouterLink>
         </div>
         <p v-if="!installedParts.length" class="muted">
@@ -534,10 +534,6 @@ h2 {
 .btn {
   min-height: 44px;
   padding: 0 1rem;
-  border: none;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
 }
 
 .card {
@@ -792,7 +788,7 @@ h2 {
 
 .tl-drift_pending {
   background: hsla(35, 95%, 50%, 0.2);
-  color: hsl(35, 90%, 45%);
+  color: var(--color-warn);
 }
 
 .tl-date {
@@ -827,7 +823,7 @@ h2 {
 }
 
 .error {
-  color: hsl(0, 65%, 50%);
+  color: var(--color-danger);
   font-weight: 600;
 }
 </style>

@@ -224,12 +224,12 @@ const rows = computed(() => {
 
 .smart-warn {
   background: hsla(40, 90%, 50%, 0.2);
-  color: hsl(35, 90%, 40%);
+  color: var(--color-warn);
 }
 
 .smart-fail {
   background: hsla(0, 80%, 50%, 0.2);
-  color: hsl(0, 75%, 50%);
+  color: var(--color-danger);
 }
 
 .smart-unknown {

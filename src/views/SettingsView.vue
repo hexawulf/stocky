@@ -236,14 +236,6 @@ const { open: openAbout } = useAbout()
 
 .btn {
   min-height: 44px;
-  border: none;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.btn-secondary {
-  background: none;
 }
 
 .btn:disabled {
@@ -335,13 +327,16 @@ const { open: openAbout } = useAbout()
 
 .recalc {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin: 0.75rem 0;
   max-width: 28rem;
 }
 
 .recalc select {
-  flex: 1;
+  flex: 1 1 12rem;
+  min-width: 0;
+  max-width: 100%;
   min-height: 44px;
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--color-border-hover);
@@ -363,7 +358,7 @@ const { open: openAbout } = useAbout()
 }
 
 .differs td {
-  color: hsl(0, 65%, 50%);
+  color: var(--color-danger);
   font-weight: 600;
 }
 
@@ -374,7 +369,7 @@ const { open: openAbout } = useAbout()
 
 .bad,
 .error {
-  color: hsl(0, 65%, 50%);
+  color: var(--color-danger);
   font-weight: 600;
 }
 </style>

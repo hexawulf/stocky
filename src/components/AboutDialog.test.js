@@ -106,7 +106,7 @@ describe('About dialog (spec §4)', () => {
       // no visible words, only the icon
       expect(el.findAll('span:not([aria-hidden="true"])')).toHaveLength(0)
     }
-    expect(about.text()).toBe('ⓘ')
+    expect(about.find('svg').exists()).toBe(true)
     expect(settings.text()).toBe('⚙')
     expect(w.get('[data-test="top-import"]').text()).toBe('Import')
     w.unmount()

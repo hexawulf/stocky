@@ -44,7 +44,7 @@ const tabs = [
     routes: ['stock'],
   },
   { to: { name: 'parts' }, label: 'Parts', icon: '☰', routes: ['parts', 'part'] },
-  { to: { name: 'record' }, label: 'Record', icon: '＋', primary: true, routes: ['record'] },
+  { to: { name: 'record' }, label: 'Record', icon: '+', primary: true, routes: ['record'] },
   { to: { name: 'history' }, label: 'History', icon: '⟲', routes: ['history'] },
   {
     to: { name: 'fleet-drift' },
@@ -99,7 +99,10 @@ const tabs = [
           data-test="top-about"
           @click="about.open"
         >
-          <span aria-hidden="true">ⓘ</span>
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 10.5v5.5 M12 7.5h.01" />
+          </svg>
         </button>
         <RouterLink
           :to="{ name: 'settings' }"
@@ -157,6 +160,7 @@ const tabs = [
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.5rem;
   min-height: 56px;
 }
 
@@ -184,7 +188,8 @@ const tabs = [
   font-weight: 600;
 }
 
-.import-btn svg {
+.import-btn svg,
+.icon-btn svg {
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
@@ -263,6 +268,9 @@ const tabs = [
 }
 
 .nav-badge {
+  position: absolute;
+  top: 4px;
+  right: calc(50% - 24px);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -271,7 +279,7 @@ const tabs = [
   padding: 0 5px;
   border-radius: 999px;
   background: hsl(35, 92%, 48%);
-  color: #fff;
+  color: #181818;
   font-size: 0.7rem;
   font-weight: 700;
   line-height: 1;
@@ -295,6 +303,18 @@ const tabs = [
   border-radius: 50%;
   background: var(--color-accent);
   color: var(--color-on-accent);
+  font-weight: 700;
+}
+
+@media (max-width: 420px) {
+  .top-actions {
+    gap: 0.1rem;
+  }
+
+  .import-btn {
+    padding: 0 0.55rem;
+    font-size: 0.88rem;
+  }
 }
 
 @media (min-width: 768px) {
@@ -331,6 +351,11 @@ const tabs = [
     min-height: 44px;
     border-radius: 10px;
     font-size: 0.95rem;
+  }
+
+  .nav-badge {
+    position: static;
+    margin-left: auto;
   }
 
   .tab.active {

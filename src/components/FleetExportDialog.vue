@@ -443,7 +443,5 @@ h2 {
 
 .btn {
   min-height: 44px;
-  border: none;
-  cursor: pointer;
 }
 </style>

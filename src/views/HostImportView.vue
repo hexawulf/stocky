@@ -327,7 +327,7 @@ const notDetectable = computed(() => ({
             data-test="add-host"
             @click="startAddHost"
           >
-            ＋ Add host
+            + Add host
           </button>
           <form v-else class="add-host" novalidate @submit.prevent="addHost">
             <div class="field">

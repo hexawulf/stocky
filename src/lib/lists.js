@@ -7,21 +7,21 @@ export const LIST_KINDS = {
     title: 'Sites',
     noun: 'site',
     empty: 'No sites yet',
-    add: '＋ Add site',
+    add: '+ Add site',
   },
   hosts: {
     collection: 'hosts',
     title: 'Hosts',
     noun: 'host',
     empty: 'No hosts yet',
-    add: '＋ Add host',
+    add: '+ Add host',
   },
   categories: {
     collection: 'categories',
     title: 'Categories',
     noun: 'category',
     empty: 'No categories yet',
-    add: '＋ Add category',
+    add: '+ Add category',
   },
 }
 

@@ -161,7 +161,7 @@ async function handleLoadDemo() {
           data-test="open-connect"
           @click="showConnect = true"
         >
-          ＋ Connect Host
+          + Connect Host
         </button>
       </div>
     </header>
@@ -230,7 +230,7 @@ async function handleLoadDemo() {
           data-test="connect-first-host"
           @click="showConnect = true"
         >
-          ＋ Connect a Host
+          + Connect a Host
         </button>
         <button
           v-if="!parts.length"
@@ -429,8 +429,9 @@ async function handleLoadDemo() {
                     v-for="(n, i) in cp.nics.slice(0, 2)"
                     :key="`n${i}`"
                     class="periph-chip nic-chip"
+                    :title="`${n.interface || 'NIC'}: ${n.model}`"
                   >
-                    {{ n.interface || 'NIC' }}: {{ n.model.slice(0, 22) }}
+                    {{ n.interface || 'NIC' }}: {{ n.model }}
                   </span>
                 </div>
 
@@ -520,10 +521,6 @@ h1 {
 .btn {
   min-height: 44px;
   padding: 0 1rem;
-  border: none;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
 }
 
 .btn:disabled {
@@ -533,18 +530,34 @@ h1 {
 
 .kpi-strip {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
 }
 
 .kpi-card {
-  padding: 0.85rem 1rem;
+  padding: 0.8rem 0.9rem;
   border: 1px solid var(--color-border);
   border-radius: 14px;
   background: var(--color-background-soft);
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+  min-width: 0;
+}
+
+.kpi-card:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 768px) {
+  .kpi-strip {
+    grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+    gap: 0.75rem;
+  }
+
+  .kpi-card:last-child:nth-child(odd) {
+    grid-column: auto;
+  }
 }
 
 .kpi-label {
@@ -556,7 +569,7 @@ h1 {
 }
 
 .kpi-val {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: var(--color-heading);
   font-variant-numeric: tabular-nums;
@@ -574,7 +587,7 @@ h1 {
 
 .warn-text,
 .drift-link {
-  color: hsl(35, 90%, 45%);
+  color: var(--color-warn);
   font-weight: 700;
 }
 
@@ -760,12 +773,12 @@ h1 {
 
 .pill-drift {
   background: hsla(35, 95%, 50%, 0.2);
-  color: hsl(35, 90%, 45%);
+  color: var(--color-warn);
 }
 
 .pill-warn {
   background: hsla(0, 85%, 50%, 0.18);
-  color: hsl(0, 75%, 50%);
+  color: var(--color-danger);
 }
 
 .role-line {
@@ -827,6 +840,14 @@ h1 {
   font-weight: 600;
   background: var(--color-accent-soft);
   color: var(--color-accent);
+  max-width: 100%;
+}
+
+.nic-chip {
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .chassis-foot {

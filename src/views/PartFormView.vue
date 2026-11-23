@@ -406,10 +406,6 @@ textarea {
 
 .btn {
   min-height: 48px;
-  border: none;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
 }
 
 .btn:disabled {

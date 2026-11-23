@@ -209,7 +209,7 @@ const allItems = computed(() => {
     {
       id: 'act-record',
       group: 'Quick Actions',
-      icon: '＋',
+      icon: '+',
       title: 'Record Stock Movement',
       subtitle: 'Add, use, move, install, uninstall, or adjust stock',
       keywords: 'record movement install swap add use move',

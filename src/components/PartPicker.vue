@@ -80,7 +80,7 @@ function createNew() {
       <li v-if="!matches.length && !allowNew" class="none">No parts match</li>
       <li v-if="allowNew">
         <button type="button" class="new" @click="createNew">
-          ＋ new part{{ query.trim() ? ` "${query.trim()}"` : '' }}
+          + new part{{ query.trim() ? ` "${query.trim()}"` : '' }}
         </button>
       </li>
     </ul>

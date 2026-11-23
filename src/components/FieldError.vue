@@ -8,7 +8,7 @@ defineProps({ message: { type: String, default: '' }, id: { type: String, defaul
 
 <style scoped>
 .field-error {
-  color: hsl(0, 65%, 48%);
+  color: var(--color-danger);
   font-size: 0.9rem;
   margin-top: 0.25rem;
 }

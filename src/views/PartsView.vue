@@ -115,7 +115,7 @@ const newPartLink = computed(() => ({
       </li>
     </ul>
 
-    <RouterLink :to="newPartLink" class="fab" aria-label="New part">＋ New part</RouterLink>
+    <RouterLink :to="newPartLink" class="fab" aria-label="New part">+ New part</RouterLink>
   </section>
 </template>
 

@@ -192,7 +192,7 @@ function dotColor(dot) {
       <div class="left-tools">
         <button type="button" class="tool-btn" aria-label="Zoom out" @click="zoomOut">−</button>
         <span class="zoom-readout">{{ Math.round(zoom * 100) }}%</span>
-        <button type="button" class="tool-btn" aria-label="Zoom in" @click="zoomIn">＋</button>
+        <button type="button" class="tool-btn" aria-label="Zoom in" @click="zoomIn">+</button>
         <button type="button" class="tool-btn" @click="resetView">Fit</button>
       </div>
       <div class="right-tools">

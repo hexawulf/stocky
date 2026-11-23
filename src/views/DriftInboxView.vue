@@ -271,7 +271,7 @@ h1 {
   padding: 0.15rem 0.55rem;
   border-radius: 999px;
   background: hsla(35, 95%, 50%, 0.18);
-  color: hsl(35, 90%, 45%);
+  color: var(--color-warn);
   font-size: 0.78rem;
   font-weight: 700;
 }
@@ -281,7 +281,7 @@ h1 {
   padding: 0.5rem 0.75rem 0.5rem 1.6rem;
   border-radius: 8px;
   background: hsla(0, 85%, 50%, 0.14);
-  color: hsl(0, 75%, 50%);
+  color: var(--color-danger);
   font-size: 0.85rem;
   font-weight: 600;
 }
@@ -309,10 +309,6 @@ h1 {
 .btn {
   min-height: 42px;
   padding: 0 1rem;
-  border: none;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
 }
 
 .muted {
@@ -320,7 +316,7 @@ h1 {
 }
 
 .error {
-  color: hsl(0, 65%, 50%);
+  color: var(--color-danger);
   font-weight: 600;
 }
 

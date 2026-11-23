@@ -509,10 +509,6 @@ h1 {
 
 .btn {
   min-height: 44px;
-  border: none;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
 }
 
 .btn:disabled {
@@ -625,7 +621,7 @@ select {
 }
 
 .danger {
-  color: hsl(0, 65%, 50%);
+  color: var(--color-danger);
 }
 
 .row-error {

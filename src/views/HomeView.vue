@@ -47,6 +47,7 @@ const unitOf = (s) => {
   </div>
 
   <div v-else class="home">
+    <h1>Stock</h1>
     <section v-if="lowStock.length" class="card low" data-test="low-stock">
       <h2>Low stock</h2>
       <ul>
@@ -145,6 +146,11 @@ const unitOf = (s) => {
   gap: 1rem;
 }
 
+.home h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
 .card {
   padding: 1rem;
   border: 1px solid var(--color-border);
@@ -193,6 +199,8 @@ li:first-child {
 .badge,
 .total,
 .nums {
+  flex: none;
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
   color: var(--color-heading);
   font-weight: 600;
@@ -293,7 +301,7 @@ li:first-child {
 
   .columns {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(12.5rem, 1fr));
     gap: 1rem;
   }
 

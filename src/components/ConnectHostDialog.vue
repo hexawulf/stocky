@@ -518,10 +518,10 @@ h3 {
 .revoke-btn {
   min-height: 34px;
   padding: 0 0.65rem;
-  border: 1px solid hsl(0, 65%, 50%);
+  border: 1px solid var(--color-danger);
   border-radius: 8px;
   background: none;
-  color: hsl(0, 65%, 50%);
+  color: var(--color-danger);
   font-weight: 600;
   cursor: pointer;
 }
@@ -532,14 +532,12 @@ h3 {
 }
 
 .error {
-  color: hsl(0, 65%, 50%);
+  color: var(--color-danger);
   font-size: 0.85rem;
   font-weight: 600;
 }
 
 .btn {
   min-height: 42px;
-  border: none;
-  cursor: pointer;
 }
 </style>
