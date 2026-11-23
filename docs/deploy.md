@@ -27,8 +27,7 @@ docker run -d --name stocky --restart unless-stopped \
   sign-up), and set each account's `seedPreset` **before its first login**
   if it shouldn't get the `standard` lists (see [presets.md](presets.md)).
 - Health check: `GET /api/health`. The image has a `HEALTHCHECK`.
-- Images: `linux/amd64` and `linux/arm64`. Tags: `latest`, `vX.Y.Z`,
-  `sha-<short>`.
+- Images: `linux/amd64` and `linux/arm64`. Tags: `latest`, `X.Y.Z`, `X.Y`.
 
 ## Behind a reverse proxy
 
@@ -44,6 +43,15 @@ server {
 
     client_max_body_size 1m;
 
+    # Keep the PocketBase admin dashboard and superuser API off the public host;
+    # use http://<host-ip>:5030/_/ on your LAN or VPN instead.
+    location ^~ /_/ {
+        return 403;
+    }
+    location ^~ /api/collections/_superusers/ {
+        return 403;
+    }
+
     location / {
         proxy_pass http://<host-ip>:5030;
         proxy_set_header Host $host;
@@ -57,10 +65,11 @@ server {
 }
 ```
 
-Consider keeping `/_/` (the dashboard) reachable only from your LAN or VPN.
-If the proxy sets `X-Forwarded-For`, tell PocketBase to trust it (dashboard →
-Settings → Application → "User IP proxy headers") so rate limits see real
-client addresses.
+Block both `/_/` (the PocketBase dashboard) and `/api/collections/_superusers/`
+(the superuser auth/API endpoint) with `403` on the public reverse proxy, and
+open `http://<host-ip>:5030/_/` only from your LAN or VPN. If the proxy sets
+`X-Forwarded-For`, tell PocketBase to trust it (dashboard → Settings →
+Application → "User IP proxy headers") so rate limits see real client addresses.
 
 ## Mail (password reset)
 
@@ -82,9 +91,13 @@ the dashboard. Never put SMTP credentials in a file in this repo.
 
 ## Hardware discovery collector
 
-`tools/stocky-collect.sh` reads one physical Linux machine and writes a JSON
-snapshot to import in Stocky (top bar → Import). Copy it to the machine and
-run it there; see [tools/README.md](../tools/README.md).
+`tools/stocky-collect.sh` (also served by every container at
+`/tools/stocky-collect.sh` alongside `/tools/stocky-collect.sh.sha256`) reads a
+Linux machine, Raspberry Pi, Cloud VPS, Synology NAS or WSL2 host and emits a
+`stocky.discovery/2` JSON snapshot. Push it automatically with `--push` and a
+scoped ingest token (`+ Connect Host` in the UI), pull over SSH with
+`tools/stocky-fleet-pull.sh`, or upload it offline via top bar → Import; see
+[tools/README.md](../tools/README.md).
 
 ## Build it yourself
 

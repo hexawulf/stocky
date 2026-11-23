@@ -1,6 +1,6 @@
 # Stocky — Specification (v1)
 
-> Status: **v1 spec, decisions recorded (§12)**. Self-hosted on PocketBase (#14); hardware discovery (§13) built in phases D1–D3. Deployment: `docs/deploy.md`; seed presets: `docs/presets.md`.
+> Status: **v1 core ledger spec, decisions recorded (§12)**. Self-hosted on PocketBase (#14); hardware discovery (§13) built in phases D1–D3. Later v1.0/v1.1 additions (Fleet Overview as default `/` and `/fleet`, Stock on `/stock`, Drift Inbox, `stocky.discovery/2` universal collector including KVM/NAS/WSL2, `⌘K` Command Palette, and Light/Dark theme toggle) are documented in `README.md` and `CHANGELOG.md`. Deployment: `docs/deploy.md`; seed presets: `docs/presets.md`.
 
 ## 1. Overview
 

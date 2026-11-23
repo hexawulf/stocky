@@ -10,7 +10,7 @@
 
 services:
   stocky:
-    image: 0xwulf/stocky:latest # or pin vX.Y.Z to update deliberately
+    image: 0xwulf/stocky:latest # or pin X.Y.Z to update deliberately
     container_name: stocky
     restart: unless-stopped
     ports:
