@@ -22,11 +22,16 @@ Source, issues and docs: **[github.com/hexawulf/stocky](https://github.com/hexaw
 
 | Fleet Rack & Chassis View | Interactive Fleet Topology SVG |
 | :---: | :---: |
-| ![Stocky 1.1 Fleet Rack & Chassis View](https://raw.githubusercontent.com/hexawulf/stocky/main/docs/screenshots/fleet-rack.png) | ![Stocky 1.1 Interactive Fleet Topology SVG](https://raw.githubusercontent.com/hexawulf/stocky/main/docs/screenshots/fleet-topology.png) |
+| ![Stocky 1.2 Fleet Rack & Chassis View](https://raw.githubusercontent.com/hexawulf/stocky/main/docs/screenshots/fleet-rack.png) | ![Stocky 1.2 Interactive Fleet Topology SVG](https://raw.githubusercontent.com/hexawulf/stocky/main/docs/screenshots/fleet-topology.png) |
 | **Host Hardware Anatomy Inspector** | **Global `⌘K` Command Palette & Serial Search** |
-| ![Stocky 1.1 Host Hardware Anatomy Inspector](https://raw.githubusercontent.com/hexawulf/stocky/main/docs/screenshots/host-inspector.png) | ![Stocky 1.1 Global Cmd+K Command Palette & Serial Search](https://raw.githubusercontent.com/hexawulf/stocky/main/docs/screenshots/command-palette.png) |
+| ![Stocky 1.2 Host Hardware Anatomy Inspector](https://raw.githubusercontent.com/hexawulf/stocky/main/docs/screenshots/host-inspector.png) | ![Stocky 1.2 Global Cmd+K Command Palette & Serial Search](https://raw.githubusercontent.com/hexawulf/stocky/main/docs/screenshots/command-palette.png) |
 
-## What's new in v1.1.0
+## What's new in v1.2.0
+
+- **Public Landing Page (`/welcome`):** Signed-out visitors to `/` see a fast, same-origin public overview (features, screenshots, Docker Compose / `docker run` quick-start, and direct **Sign in** button) while signed-in users land straight on **Fleet** and deep links preserve `/login?redirect=…`.
+- **WCAG AA Contrast, UI & Mobile Polish:** Upgraded light/dark contrast tokens, restored `.btn-secondary` borders across views and dialogs, replaced missing-glyph Unicode symbols with crisp icons, fitted all 5 Fleet KPI cards on one desktop row, and eliminated 390 px mobile horizontal overflow on Settings.
+
+### Earlier in v1.1.0
 
 - **Global `⌘K` / `Ctrl+K` Command Palette:** Instant fuzzy search from any screen (`⌘K`, `Ctrl+K`, or top-bar `⌕` button) across every **Host**, physical **Drive by Serial Number**, **GPU**, **NIC MAC / IPv4**, **Part Type**, and **Quick Actions**.
 - **Light / Dark / System Theme Toggle:** 1-click top-bar theme switcher (`☀` / `☾`) plus a `System / Light / Dark` selector in Settings (`/settings`).
@@ -56,7 +61,7 @@ superuser right after the first start, as shown above.
 Then open `http://<host>:8080/_/` (the dashboard), create your user account
 (there is no public sign-up), and sign in at `http://<host>:8080/`. On a new
 instance, click **Load Demo Fleet** on `/` to explore a 4-node visual
-homelab showcase right away, or click **＋ Connect Host** to generate an
+homelab showcase right away, or click **+ Connect Host** to generate an
 ingest token and discover your real machines.
 
 ## Docker Compose
@@ -64,7 +69,7 @@ ingest token and discover your real machines.
 ```yaml
 services:
   stocky:
-    image: 0xwulf/stocky:1.1.0 # or :latest; pin X.Y.Z to update deliberately
+    image: 0xwulf/stocky:1.2.0 # or :latest; pin X.Y.Z to update deliberately
     container_name: stocky
     restart: unless-stopped
     ports:
@@ -84,8 +89,8 @@ docker exec -it stocky /pb/pocketbase superuser upsert you@example.com 'a-long-p
 
 | Tag      | Meaning                                         |
 | -------- | ----------------------------------------------- |
-| `1.1.0`  | one exact release (recommended for production)  |
-| `1.1`    | the newest patch release of the 1.1 minor line  |
+| `1.2.0`  | one exact release (recommended for production)  |
+| `1.2`    | the newest patch release of the 1.2 minor line  |
 | `latest` | the newest release (pre-releases never move it) |
 
 - Platforms: `linux/amd64` and `linux/arm64` (Raspberry Pi 4/5) in one

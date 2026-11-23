@@ -20,11 +20,11 @@ export const STACK = [
 ]
 
 export const WHATS_NEW = [
-  'Visual Fleet Rack & Chassis Cards, Interactive Topology SVG, and Spec Comparison Matrix (/fleet)',
-  'Universal collector v2.0 (bare-metal, Raspberry Pi, KVM/Cloud VPS, Synology NAS, WSL2, GPU & SMART)',
-  'Automated push/pull ingest tokens (SHA-256 hashed) + Drift Inbox with 1-click ledger apply & undo',
-  'Host Hardware Anatomy SVG Inspector & privacy-redacted SVG, 2× PNG, Markdown, and JSON exports',
-  'Global ⌘K / Ctrl+K Command Palette (instant search across hosts, drive serials, GPUs, MACs, and parts) + Light/Dark theme toggle',
+  'Public Landing Page (/welcome) for signed-out visitors with lazy-loaded WebP screenshots, Docker quick-start, and same-origin OG metadata',
+  'WCAG AA contrast tokens across light/dark themes, restored secondary button outlines, crisp icon glyphs, 1-row Fleet KPI strip, and overflow-free mobile Settings',
+  'Visual Fleet Rack & Chassis Cards, Interactive Topology SVG, Host Hardware Anatomy Inspector, and Spec Comparison Matrix (/fleet)',
+  'Universal collector v2.0 (bare-metal, Raspberry Pi, KVM/Cloud VPS, Synology NAS, WSL2, GPU & SMART) + SHA-256 ingest tokens & Drift Inbox',
+  'Global ⌘K / Ctrl+K Command Palette (search across hosts, drive serials, GPUs, MACs, and parts), privacy-redacted exports, and Light/Dark theme toggle',
 ]
 
 export const CONTACT = {

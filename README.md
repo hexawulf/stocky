@@ -19,9 +19,9 @@ It runs as **one Docker container**: [PocketBase](https://pocketbase.io)
 
 | Fleet Rack & Chassis View | Interactive Fleet Topology SVG |
 | :---: | :---: |
-| ![Stocky 1.1 Fleet Rack & Chassis View](docs/screenshots/fleet-rack.png) | ![Stocky 1.1 Interactive Fleet Topology SVG](docs/screenshots/fleet-topology.png) |
+| ![Stocky 1.2 Fleet Rack & Chassis View](docs/screenshots/fleet-rack.png) | ![Stocky 1.2 Interactive Fleet Topology SVG](docs/screenshots/fleet-topology.png) |
 | **Host Hardware Anatomy Inspector** | **Global `⌘K` Command Palette & Serial Search** |
-| ![Stocky 1.1 Host Hardware Anatomy Inspector](docs/screenshots/host-inspector.png) | ![Stocky 1.1 Global Cmd+K Command Palette & Serial Search](docs/screenshots/command-palette.png) |
+| ![Stocky 1.2 Host Hardware Anatomy Inspector](docs/screenshots/host-inspector.png) | ![Stocky 1.2 Global Cmd+K Command Palette & Serial Search](docs/screenshots/command-palette.png) |
 
 ## What's new in v1.2.0
 
@@ -77,7 +77,7 @@ Tags: `X.Y.Z`, `X.Y` and `latest`; what changed is in [CHANGELOG.md](CHANGELOG.m
 ## Discovery collector
 
 ```sh
-# 1. Automated push to Stocky (recommended — see "＋ Connect Host" in the UI):
+# 1. Automated push to Stocky (recommended — see "+ Connect Host" in the UI):
 tools/stocky-collect.sh --push https://stocky.example.com --token-file ~/.config/stocky/ingest.token
 
 # 2. Central read-only SSH pull (for Synology NAS or isolated nodes):
