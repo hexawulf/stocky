@@ -5,6 +5,21 @@ All notable changes to Stocky. The format follows
 [Semantic Versioning](https://semver.org/). Docker images are published as
 `0xwulf/stocky:<version>`, `:<major>.<minor>` and `:latest`.
 
+## [Unreleased]
+
+### Added
+
+- **Public Landing Page (`LandingView.vue`, `/welcome`):**
+  - Signed-out visitors to `/` now see a lazy-loaded, same-origin public landing page (hero with Sign in + GitHub links, feature cards, optimized WebP screenshots, Docker Compose / `docker run` quick-start snippet, and footer with live build version).
+  - Signed-in users continue to land directly on Fleet (`/`), deep links preserve `/login?redirect=…`, and `index.html` includes Open Graph metadata (`og:title`, `og:description`, `og:image`, `og:url`).
+
+### Fixed
+
+- **Accessibility & Contrast:** Raised light-mode primary accent contrast from 3.65:1 to 5.01:1 (`hsl(160, 100%, 25%)`), fixed muted/warning/danger/badge text contrast in both themes, and respected explicit `data-theme` on `MovementIcon`.
+- **UI & Mobile Layout:** Fixed scoped `.btn` overrides stripping borders from `.btn-secondary` buttons, replaced CJK fullwidth `＋` and `ⓘ` glyphs that rendered as missing-glyph boxes on minimal Linux font stacks, eliminated the Fleet KPI orphan row on desktop, added `scrollBehavior` top-reset on navigation, added an `<h1>` and non-wrapping quantity badges on Stock (`/stock`), and fixed 390 px horizontal overflow on Settings.
+- **App Behaviour:** Fixed Command Palette (`⌘K`) part installed counts to sum PocketBase `part.installed` maps with singular/plural units, fixed `RecordView` `?host=` pre-selection for `install` links from Host Detail, kept the Parts nav tab active on `/parts/new` and `/parts/:id/edit`, and updated the Import placeholder to `stocky.discovery/2`.
+- **Documentation & Cleanup:** Removed orphaned v0.1 screenshots and unused starter CSS, updated `docs/deploy.md` to document blocking `/_/` and `/api/collections/_superusers/` with `403` on public reverse proxies and accurate Docker tags (`latest`, `X.Y.Z`, `X.Y`), updated `compose.yaml` tag comment, `SECURITY.md` supported versions (`1.x`), and `spec.md` status note.
+
 ## [1.1.0] - 2026-11-22
 
 ### Added

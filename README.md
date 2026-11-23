@@ -23,7 +23,14 @@ It runs as **one Docker container**: [PocketBase](https://pocketbase.io)
 | **Host Hardware Anatomy Inspector** | **Global `⌘K` Command Palette & Serial Search** |
 | ![Stocky 1.1 Host Hardware Anatomy Inspector](docs/screenshots/host-inspector.png) | ![Stocky 1.1 Global Cmd+K Command Palette & Serial Search](docs/screenshots/command-palette.png) |
 
-## What's new in v1.1.0
+## What's new in v1.2.0
+
+- **Public Landing Page (`/welcome`):** Signed-out visitors to `/` now see a fast, same-origin public overview of Stocky (features, screenshots, quick-start Docker Compose / `docker run` snippet, and direct **Sign in** button) while signed-in users land straight on **Fleet** and deep links keep redirecting through `/login?redirect=…`.
+- **WCAG AA Contrast, UI & Mobile Polish:** Upgraded light/dark contrast tokens (primary buttons 5.01:1 light / 9.70:1 dark), fixed secondary button borders across views and dialogs, replaced missing-glyph Unicode symbols with crisp icons, fitted all 5 Fleet KPI cards on one desktop row, and eliminated horizontal overflow on 390 px mobile Settings.
+
+![Stocky 1.2 Public Landing Page](docs/screenshots/landing.png)
+
+### Earlier in v1.1.0
 
 - **Global `⌘K` / `Ctrl+K` Command Palette:** Instant fuzzy search from any screen (`⌘K`, `Ctrl+K`, or top-bar `⌕` button) across every **Host**, physical **Drive by Serial Number**, **GPU**, **NIC MAC / IPv4**, **Part Type**, and **Quick Actions**.
 - **Light / Dark / System Theme Toggle:** 1-click top-bar theme switcher (`☀` / `☾`) plus a `System / Light / Dark` selector in Settings (`/settings`).
