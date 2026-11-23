@@ -21,7 +21,72 @@ const ROOT = process.cwd()
 const BASE_URL = process.env.STOCKY_BASE_URL || 'http://127.0.0.1:8097'
 const CAPTURE_SCREENSHOTS = process.env.STOCKY_CAPTURE_SCREENSHOTS === '1'
 
-test.describe('Stocky 1.0 E2E Smoke Suite', () => {
+test.describe('Stocky E2E Smoke Suite', () => {
+  test('public landing page renders signed out with zero cross-origin requests and links to /login', async ({
+    page,
+  }) => {
+    const origin = new URL(BASE_URL).origin
+    const crossOrigin = []
+    const pageErrors = []
+    page.on('pageerror', (err) => pageErrors.push(String(err)))
+    page.on('request', (req) => {
+      const u = new URL(req.url())
+      if (u.origin !== origin && u.protocol !== 'data:' && u.protocol !== 'blob:') {
+        crossOrigin.push(`${req.method()} ${req.url()}`)
+      }
+    })
+
+    await page.setViewportSize({ width: 1280, height: 860 })
+    await page.goto('/')
+    await expect(page.locator('[data-test="landing-page"]')).toBeVisible()
+    await expect(page.locator('h1')).toHaveText('Stocky')
+    const signInBtn = page.locator('[data-test="landing-signin"]')
+    await expect(signInBtn).toBeVisible()
+
+    // Ensure hero CTA is visible above the fold on desktop
+    const desktopBox = await signInBtn.boundingBox()
+    expect(desktopBox.y + desktopBox.height).toBeLessThanOrEqual(860)
+
+    // Scroll to trigger lazy-loaded screenshots and confirm all load cleanly
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+    const images = page.locator('[data-test="landing-page"] img')
+    const imgCount = await images.count()
+    expect(imgCount).toBeGreaterThanOrEqual(2)
+    for (let i = 0; i < imgCount; i++) {
+      await expect(images.nth(i)).toHaveJSProperty('complete', true)
+      const nw = await images.nth(i).evaluate((el) => el.naturalWidth)
+      expect(nw).toBeGreaterThan(0)
+    }
+
+    if (CAPTURE_SCREENSHOTS) {
+      await page.emulateMedia({ colorScheme: 'light' })
+      await page.evaluate(() => {
+        localStorage.setItem('stocky.theme', 'light')
+        document.documentElement.setAttribute('data-theme', 'light')
+        window.scrollTo(0, 0)
+      })
+      await page.screenshot({ path: resolve(ROOT, 'docs/screenshots/landing.png') })
+    }
+
+    // Mobile 390x844: zero horizontal overflow and hero CTA visible without scrolling
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.evaluate(() => window.scrollTo(0, 0))
+    const mobileBox = await signInBtn.boundingBox()
+    expect(mobileBox.y + mobileBox.height).toBeLessThanOrEqual(844)
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    )
+    expect(overflow).toBe(false)
+
+    // Sign-in CTA navigates to /login
+    await signInBtn.click()
+    await expect(page).toHaveURL(/\/login$/)
+    await expect(page.getByLabel('Email')).toBeVisible()
+
+    expect(crossOrigin).toEqual([])
+    expect(pageErrors).toEqual([])
+  })
+
   test('full fleet discovery, visual topology, drift apply, redacted export, about modal & mobile viewport', async ({
     page,
     request,
