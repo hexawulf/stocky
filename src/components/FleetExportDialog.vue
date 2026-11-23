@@ -239,7 +239,6 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
       </fieldset>
 
       <div class="preview-box" data-test="export-preview">
-        <!-- eslint-disable-next-line vue/no-v-html -->
         <div
           v-if="format === 'svg' || format === 'png'"
           class="svg-preview"

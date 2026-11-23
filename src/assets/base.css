@@ -40,8 +40,6 @@
   --color-accent-strong: hsl(160, 100%, 24%);
   --color-accent-soft: hsla(160, 100%, 37%, 0.12);
   --color-on-accent: var(--vt-c-white);
-
-  --section-gap: 160px;
 }
 
 :root[data-theme='dark'] {
