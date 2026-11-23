@@ -115,8 +115,7 @@ watch(
       <!-- new part: name, category, unit, or an existing part ("Is this …?") -->
       <div v-if="showNewPart" class="new-part">
         <p v-if="chosenPart" class="using">
-          Using your part <strong>{{ chosenPart.name }}</strong
-          ><template v-if="chosenHere"
+          Using your part <strong>{{ chosenPart.name }}</strong><template v-if="chosenHere"
             >, already recorded here: adds the serial, no movement.</template
           >
           <button type="button" class="link" :disabled="disabled" @click="d.partId = ''">
