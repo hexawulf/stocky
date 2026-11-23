@@ -291,7 +291,7 @@ const notDetectable = computed(() => ({
             v-model="text"
             rows="5"
             spellcheck="false"
-            placeholder='{ "schema": "stocky.discovery/1", … }'
+            placeholder='{ "schema": "stocky.discovery/2", … }'
             :disabled="busy"
           ></textarea>
         </div>

@@ -6,6 +6,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useInventory } from '@/stores/inventory.js'
 import { useTheme } from '@/composables/useTheme.js'
+import { formatQty } from '@/lib/format.js'
 
 const emit = defineEmits(['close'])
 const router = useRouter()
@@ -175,12 +176,16 @@ const allItems = computed(() => {
 
   // 2. Spare Parts catalog
   for (const p of parts) {
+    const installedCount =
+      typeof p.installedTotal === 'number'
+        ? p.installedTotal
+        : Object.values(p.installed ?? {}).reduce((sum, n) => sum + (Number(n) || 0), 0)
     list.push({
       id: `part-${p.id}`,
       group: 'Parts',
       icon: '☰',
       title: p.name,
-      subtitle: `${p.spareTotal ?? 0} ${p.unit || 'pcs'} spare · ${p.installedTotal ?? 0} installed`,
+      subtitle: `${formatQty(p.spareTotal ?? 0, p.unit || 'pcs')} spare · ${installedCount} installed`,
       keywords: [p.name, p.notes, p.unit, 'part', 'spare'].filter(Boolean).join(' ').toLowerCase(),
       run: () => router.push({ name: 'part', params: { id: p.id } }),
     })

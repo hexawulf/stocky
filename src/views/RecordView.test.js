@@ -424,17 +424,20 @@ describe('Record: found installed and stock out from a host (spec §13.4.1–2)'
     w.unmount()
   })
 
-  it('?host= pre-selects the host (the import screen\'s "Not detectable" link)', async () => {
+  it('?host= pre-selects the host for found_installed and install', async () => {
     const w = await mountRecord({ type: 'found_installed', host: 'nsb' })
     expect(w.get('#rec-to').element.value).toBe('nsb')
     w.unmount()
-    // ignored for other types, and for unknown hosts
     const w2 = await mountRecord({ type: 'install', host: 'nsb', part: 'p1' })
-    expect(w2.get('#rec-to').element.value).toBe('')
+    expect(w2.get('#rec-to').element.value).toBe('nsb')
     w2.unmount()
-    const w3 = await mountRecord({ type: 'found_installed', host: 'nope' })
+    // ignored for non-host destination types, and for unknown hosts
+    const w3 = await mountRecord({ type: 'move', host: 'nsb', part: 'p1' })
     expect(w3.get('#rec-to').element.value).toBe('')
     w3.unmount()
+    const w4 = await mountRecord({ type: 'found_installed', host: 'nope' })
+    expect(w4.get('#rec-to').element.value).toBe('')
+    w4.unmount()
   })
 
   it('found installed can start a new part', async () => {

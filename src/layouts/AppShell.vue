@@ -43,7 +43,12 @@ const tabs = [
     icon: '⌂',
     routes: ['stock'],
   },
-  { to: { name: 'parts' }, label: 'Parts', icon: '☰', routes: ['parts', 'part'] },
+  {
+    to: { name: 'parts' },
+    label: 'Parts',
+    icon: '☰',
+    routes: ['parts', 'part', 'part-new', 'part-edit'],
+  },
   { to: { name: 'record' }, label: 'Record', icon: '+', primary: true, routes: ['record'] },
   { to: { name: 'history' }, label: 'History', icon: '⟲', routes: ['history'] },
   {

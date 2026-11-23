@@ -106,4 +106,18 @@ describe('CommandPalette (⌘K / Ctrl+K)', () => {
     await wrapper.get('[data-test="cmd-backdrop"]').trigger('keydown', { key: 'Escape' })
     expect(wrapper.emitted('close')).toBeTruthy()
   })
+
+  it('sums PocketBase part.installed maps and formats singular unit labels', async () => {
+    fx.state.parts.value = [
+      {
+        id: 'p2',
+        name: 'Samsung 990 PRO 1TB',
+        unit: 'pcs',
+        spareTotal: 1,
+        installed: { h1: 2, h2: 1 },
+      },
+    ]
+    const { wrapper } = await mountPalette()
+    expect(wrapper.text()).toContain('1 pc spare · 3 installed')
+  })
 })

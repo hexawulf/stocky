@@ -62,10 +62,15 @@ function applyQuery(q) {
   if (q.part && records.parts[q.part] && !records.parts[q.part].archived) draft.partId = q.part
   presetHost()
 }
-// ?host= (from an import's "Not detectable" panel) pre-selects the host
+// ?host= (from HostDetailView or an import's "Not detectable" panel) pre-selects the host
 function presetHost() {
   const h = route.query.host
-  if (draft.type === 'found_installed' && h && records.hosts[h] && !records.hosts[h].retired) {
+  if (
+    (draft.type === 'found_installed' || draft.type === 'install') &&
+    h &&
+    records.hosts[h] &&
+    !records.hosts[h].retired
+  ) {
     draft.toId = h
   }
 }
