@@ -20,7 +20,7 @@
     "test:e2e:live": "STOCKY_BASE_URL=${STOCKY_LIVE_URL:-http://127.0.0.1:5030} npx playwright test"
   },
   "dependencies": {
-    "pocketbase": "^0.28.1",
+    "pocketbase": "^0.29.0",
     "vue": "^3.6.0-rc.0",
     "vue-router": "^5.5.1"
   },
