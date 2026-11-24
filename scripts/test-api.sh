@@ -12,7 +12,7 @@
 #                --only S    run just that server suite (e.g. test-discovery.mjs), no Vitest
 #              PB_BIN=/path/to/pocketbase overrides the binary; PORT (default
 #              8091) is the loopback port used for the test servers.
-# Modified:    2026-10-05
+# Modified:    2026-11-24
 set -euo pipefail
 
 PB_VERSION=0.40.6 # keep in step with spec §12 #19 and the Dockerfile
@@ -123,6 +123,8 @@ cat >"$public/index.html" <<'HTML'
 <body><div id="app"></div></body></html>
 HTML
 echo 'console.log("stocky test asset")' >"$public/assets/index-test1234.js"
+# a missing robots.txt falls through to index.html (200 text/html)
+cp "$ROOT/public/robots.txt" "$public/robots.txt"
 export STOCKY_PUBLIC_DIR="$public"
 
 run_suite() {

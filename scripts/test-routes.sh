@@ -5,7 +5,7 @@
 #              delete stock-scan, part hooks, recalculate, realtime scoping.
 #              Run via scripts/test-api.sh (fresh throwaway PocketBase); needs
 #              PB_DB (that instance's data.db) to back-date a movement.
-# Modified:    2026-10-04
+# Modified:    2026-11-24
 set -euo pipefail
 
 B=${PB_URL:-http://127.0.0.1:8091}
@@ -317,6 +317,13 @@ check_eq '/ (index.html): 200' 200 "$(status_of "$B/")"
 check_eq '/ (index.html): Cache-Control no-cache' 'no-cache' "$(hdr "$B/" Cache-Control)"
 check_eq '/parts/abc (SPA fallback): 200 html' '200 text/html' "$(status_of "$B/parts/abc") $(type_of "$B/parts/abc" | cut -d';' -f1)"
 check_eq '/parts/abc (SPA fallback): Cache-Control no-cache' 'no-cache' "$(hdr "$B/parts/abc" Cache-Control)"
+# a real file, not the SPA shell: private app, every crawler disallowed
+check_eq '/robots.txt: 200 text/plain' '200 text/plain' "$(status_of "$B/robots.txt") $(type_of "$B/robots.txt" | cut -d';' -f1)"
+robots_got=$(curl -s "$B/robots.txt" | tr -d '\r')
+robots_want=$(tr -d '\r' <"${STOCKY_PUBLIC_DIR:?}/robots.txt")
+check_eq '/robots.txt body is the static disallow file' "$robots_want" "$robots_got"
+check_eq '/robots.txt is not index.html' 0 "$(printf '%s' "$robots_got" | grep -c '<div id="app">' || true)"
+check_eq '/robots.txt has no sitemap' 0 "$(printf '%s' "$robots_got" | grep -ci sitemap || true)"
 check_eq "$ASSET: 200" 200 "$(status_of "$B$ASSET")"
 check_eq "$ASSET: cached a year, immutable" 'public, max-age=31536000, immutable' "$(hdr "$B$ASSET" Cache-Control)"
 check_eq 'missing /assets/ file: 404, not index.html' '404' "$(status_of "$B/assets/index-gone0000.js")"
