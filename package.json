@@ -11,7 +11,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/check-robots.mjs",
     "preview": "vite preview",
     "format": "prettier --write --experimental-cli src/",
     "test": "vitest run",
